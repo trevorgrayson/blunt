@@ -1,0 +1,4 @@
+#!/bin/sh
+
+PYTHONPATH=$PYTHONPATH:$HOME/projects/blunt/
+python3 -m meet $@

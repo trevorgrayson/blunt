@@ -1,0 +1,15 @@
+@startuml
+title Situation Handling Flow
+
+start
+
+:Situation;
+
+if (Impacting Production?) then (yes)
+  :PagerDuty;
+else (no)
+  :Send Warning Notification;
+endif
+
+stop
+@enduml

@@ -1,0 +1,67 @@
+@startmindmap
+<style>
+mindmapDiagram {
+
+    .feature { // blunt features
+        BackgroundColor lightgreen
+    }
+    .earnin {
+        BackgroundColor yellow
+    }
+    .action {
+        BackgroundColor pink
+    }
+}
+</style>
++ Data Programs
+
+++ Quality <<program>>
+***:Registration
+define scope, limitations, risk;
+****:Applications
+including Apps, Processes, Pipelines...;
+**** Resources
+***** Datasets
+**** Liabilities/Risk
++++ Monitoring
+++++ False Flags
+++++ Missing Montors
++++ Code Quality
+++++ Testing
++++++ Unit
++++++ Smoke
++++ Reviews
+++++ Architecture
+++ Code
++++ CI/CD
++++ Deployments as Code
++++ Polymorphic Querying Hierarchy
++++ Orchestration
+++++ Orchestration/Business Logic Separation
++++ See Quality.
+
+++ Documentation
++++ Docs As Code
+++++ [[https://pointillism.io pointillism]]
++++++ Docs as Code <<action>>
+++++ "Docs as Code Documentation"
++++++ necessaryeval.com
++++++ in-house documentation <<earnin>>
+****: diagram scaffold
+puml/uml doc generation
+60% pretty, 100% current/accuracy
+sdf; <<feature>>
++++ Types
+++++ Mind Maps
+++++ Activity Diagrams
+
+++ Governance
++++ Permissions
+
+++ Observability
++++ roles
++++ datasets
++++ compute
+
+++ Change Management
+@endmindmap
