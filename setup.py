@@ -26,11 +26,14 @@ setup(
     packages=["meet"],  # find_packages(where="./src"),
     package_dir={"": "."},
     entry_points={
+        "console_scripts": [
+            "blunt=widget:main",
+            "meet=meet:main"
+        ],
         "packages": [
-            "main=meet" # "main=meet.main:main",
+            # "main=meet" # "main=meet.main:main",
         ],
     },
-    scripts=['meet'],
     install_requires=[
         # Dependencies in case the output wheel file is used as a library dependency.
         # For defining dependencies, when this package is used in Databricks, see:
