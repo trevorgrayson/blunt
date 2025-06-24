@@ -18,16 +18,28 @@ def main():
     EDITOR = environ.get("EDITOR", "vi")
     path_name = path.join(MEET_DIR, args.name)
 
+    if len(args.agenda) > 0 and args.agenda[0] in ['e', 'edit']:
+        if EDITOR in ["vi", "vim"]:
+            EDITOR = "vi"
+            system(f"{EDITOR} -o {MEET_DIR}/.dossier/{args.name} {path_name}")
+        else:
+            system(f"{EDITOR} {path_name}")
+
     if len(args.agenda) > 0:
         date_s = datetime.now().strftime("%Y-%m-%d")
         with open(path_name, "a") as f:
             f.write(f"{date_s} ")
             f.write(" ".join(args.agenda))
             f.write("\n")
-    else:
-        print(EDITOR)
-        if EDITOR in ["vi", "vim"]:
-            EDITOR = "vi"
-            system(f"{EDITOR} -o {MEET_DIR}/.dossier/{args.name} {path_name}")
-        else:
-            system(f"{EDITOR} {path_name}")
+    
+    queue = []
+    with open(path_name, "r") as f:
+        lines = f.read().split("\n")
+        for line in lines:
+            queue.append(line)
+
+            if len(queue) > 10:
+                queue.pop()
+
+    for line in queue:
+        print(line)
