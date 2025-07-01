@@ -1,2 +1,2 @@
 install:
-	cp bin/* $(HOME)/.bin/
+	python3 setup.py install --user

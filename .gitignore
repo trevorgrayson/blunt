@@ -4,4 +4,4 @@ build
 blunt.egg-info
 dist
 *.pyc
-
+docs/*
