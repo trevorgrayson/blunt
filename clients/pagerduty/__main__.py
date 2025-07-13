@@ -1,10 +1,37 @@
 from os import environ
+from argparse import ArgumentParser
+from datetime import datetime, timedelta
 from . import PagerDuty
+
 
 TOKEN = environ.get("PAGERDUTY_TOKEN")
 
+
+parser = ArgumentParser(description="PagerDuty API Client")
+parser.add_argument("--days", default=7, type=int,
+                    help="Number of days to query (default: %(default)s)")
+parser.add_argument("--count", action='store_true')
+parser.add_argument("--limit", type=int, default=100)
+parser.add_argument("--offset", type=int, default=0)
+parser.add_argument("--team")
+args = parser.parse_args()
+
+days_ago = datetime.now() - timedelta(days=args.days)
+
 client = PagerDuty(TOKEN)
 
-incs = client.incidents(statuses=["resolved"]) # since="2025-01-01")
+params = dict(
+    since=days_ago.date(),
+    team=args.team,
+    limit=args.limit,
+    offset=args.offset
+)
+
+count = 0
+incs = client.incidents(**params) # statuses=["resolved"],
 for inc in incs:
+    count += 1
     print(inc)
+
+if args.count:
+    print(f"count: {count}")

@@ -21,7 +21,12 @@ class PagerDuty:
         }
 
     def request(self, method, path, params=None):
-        self.conn.request(method, path,
+        query = ''
+        if params:
+            query = "&".join([f"{k}={v}" for k, v in params.items()])
+            query = "?" + query
+
+        self.conn.request(method, path + query,
                           headers=self.headers())
         response = self.conn.getresponse()
         if response.status == 200:
