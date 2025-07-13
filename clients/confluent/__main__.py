@@ -1,25 +1,37 @@
-from argparse import ArgumentParser
 from . import Confluent
 
-METRICS = [
-    "consumer_lag",
-    "received_bytes",
-    "sent_bytes",
-    # "producer_latency_avg_milliseconds"
-]
-parser = ArgumentParser(description="Confluent Cluster Metrics")
-parser.add_argument("metric", choices=METRICS, default="received_bytes",
-                    help="Metric name.")
-args = parser.parse_args()
-
 client = Confluent()
-results = client.received_bytes()
 
-for result in results:
-    print(result)
+results = client.received_bytes()
 
 sum_ = 0
 for result in results:
     sum_ += result.value
 
-print(sum_)
+def bytes_to_mb(bytes_value):
+    """
+    Convert bytes to megabytes (MB), accurate to 3 decimal places.
+
+    Parameters:
+    - bytes_value (int or float): The number of bytes to convert.
+
+    Returns:
+    - float: The size in megabytes rounded to 3 decimal places.
+    """
+    if not isinstance(bytes_value, (int, float)):
+        raise TypeError("Input must be an integer or float representing bytes.")
+
+    mb_value = bytes_value / 1_000_000
+    return round(mb_value, 3)
+
+# print(sum_)
+import plotille
+
+n = range(0, len(results))
+# 1hr => seconds
+values = [bytes_to_mb(result.value/(60)) for result in results]
+
+fig = plotille.Figure()
+print(plotille.plot(n, values, height=30, width=60, interp="linear", lc="cyan", Y_label="MB/s", X_label="time"))
+
+print(results[-1])

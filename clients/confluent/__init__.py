@@ -74,32 +74,13 @@ class Confluent:
         return [BytesPer(**row)
                 for row in data["data"]]
 
-    def sent_bytes(self, granularity="PT1M", limit=100):
-        query = {
-          "aggregations": [{"metric": "io.confluent.kafka.server/sent_bytes"}],
-          "filter": {
-            "field": "resource.kafka.id",
-            "op": "EQ",
-            "value": self.filter
-          },
-          "intervals": [
-            "PT1H/now"
-          ],
-          "granularity": "PT1M",
-          "limit": limit
-        }
-
-        data = self.request(query)
-        return [BytesPer(**row)
-                for row in data["data"]]
-
     # io.confluent.kafka.server/producer_latency_avg_milliseconds
     # io.confluent.kafka.server/sent_bytes
     # io.confluent.kafka.server/received_records
     # io.confluent.kafka.server/sent_records
     # io.confluent.kafka.server/received_bytes
     # io.confluent.kafka.server/response_bytes
-    
+
     def cluster_query(self, metric, filter, granularity="PT1H", group_by=None, limit=25):
         if group_by is None:
             group_by = []
