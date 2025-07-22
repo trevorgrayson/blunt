@@ -1,5 +1,5 @@
-from . import Confluent
-
+from . import Confluent, Metrics
+import json
 client = Confluent()
 
 results = client.received_bytes()
@@ -24,6 +24,10 @@ def bytes_to_mb(bytes_value):
     mb_value = bytes_value / 1_000_000
     return round(mb_value, 3)
 
+# print(json.dumps(client.top_topics()))
+
+print(json.dumps(client.query(Metrics.TopTopics, "metric.topic")))
+exit(0)
 # print(sum_)
 import plotille
 
