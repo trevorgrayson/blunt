@@ -23,12 +23,13 @@ setup(
     url="https://trevorgrayson.com",
     author="trevor@trevorgrayson.com",
     description="Automating the Blunt end of the office.",
-    packages=["meet"],  # find_packages(where="./src"),
+    packages=["meet", "dossier"],  # find_packages(where="./src"),
     package_dir={"": "."},
     entry_points={
         "console_scripts": [
             "blunt=widget:main",
-            "meet=meet:main"
+            "meet=meet:main",
+            "dossier=dossier:main",
         ],
         "packages": [
             # "main=meet" # "main=meet.main:main",

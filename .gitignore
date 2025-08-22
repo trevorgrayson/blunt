@@ -5,3 +5,5 @@ blunt.egg-info
 dist
 *.pyc
 docs/*
+venv
+.venv
