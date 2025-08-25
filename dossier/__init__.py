@@ -1,4 +1,5 @@
 from os import path, environ
+
 from .models import Employee
 import csv
 from argparse import ArgumentParser
@@ -10,8 +11,8 @@ def main():
     parser = ArgumentParser(description='dossier: human lookup')
     parser.add_argument('name', nargs='?',
                         help='name to lookup')
-    # parser.add_argument('--csv', default=DATA_CSV,
-    #                     help='path to csv file')
+    parser.add_argument('--format', default="display",
+                        help='[tab|default] default: multiline')
 
     args = parser.parse_args()
 
@@ -40,5 +41,9 @@ def main():
                 ea.manager = everyone[ea.manager]
 
         for res in result:
-            print(res)
+            match args.format:
+                case "tab":
+                    print("\t".join(map(str, (res.name, res.email, res.subteam))))
+                case _:
+                    print(res)
             print()
