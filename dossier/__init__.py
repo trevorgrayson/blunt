@@ -43,7 +43,7 @@ def main():
         for res in result:
             match args.format:
                 case "tab":
-                    print("\t".join(map(str, (res.name, res.email, res.subteam))))
+                    print("\t".join(map(str, (res.name, res.email, res.subteam, res.team))))
                 case _:
-                    print(res)
+                    print(repr(res))
             print()

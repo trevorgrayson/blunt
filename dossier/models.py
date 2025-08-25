@@ -18,8 +18,11 @@ class Employee:
     def match(self, name):
         return name in self.name
 
+    def __str__(self):
+        return self.email
+
     def __repr__(self):
         return f"{self.name} <{self.email}> {self.title}\n\t" +\
                 f"{self.team}, {self.subteam}\n\t" +\
                 f"{self.org} {self.subteam_role}\n\t" +\
-                f"Reports to: {self.manager.name}"
+                f"Reports to: {str(self.manager)}"
