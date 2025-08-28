@@ -27,7 +27,7 @@ setup(
     package_dir={"": "."},
     entry_points={
         "console_scripts": [
-            "blunt=widget:main",
+            "blunt=widget:main", # data_diff.__main__:main https://github.com/datafold/data-diff/blob/master/pyproject.toml
             "meet=meet:main",
             "dossier=dossier:main",
         ],
