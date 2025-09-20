@@ -18,7 +18,7 @@ int mapM3 = -1;
 String inputLine = "";
 
 void setup() {
-  Serial.begin(115200);  // match Python baud
+  Serial.begin(115200);
   pinMode(METER1, OUTPUT);
   pinMode(METER2, OUTPUT);
   pinMode(METER3, OUTPUT);
@@ -66,10 +66,28 @@ void processLine(const String& line) {
   int idx = findOrAddMetric(metric);
   metricValues[idx] = value;
 
+  setDefaultMeter(metric);
   Serial.print("Updated metric ");
   Serial.print(metric);
   Serial.print(" = ");
   Serial.println(value);
+}
+
+/*
+If an unutilized meter exists, set it. 
+*/
+int setDefaultMeter(String metric) {
+  if (mapM1 == -1) {
+    mapM1 = findOrAddMetric(metric);
+    return 1;
+  } else if (mapM2 == -1) {
+    mapM2 = findOrAddMetric(metric);
+    return 1;
+  } else if (mapM3 == -1) {
+    mapM3 = findOrAddMetric(metric);
+    return 1;
+  }
+  return 0;
 }
 
 int findOrAddMetric(const String& name) {
