@@ -10,13 +10,31 @@ QUERY_PATH = "/v2/metrics/cloud/query"
 KEY = environ.get("CONFLUENT_KEY")
 SECRET = environ.get("CONFLUENT_SECRET")
 TOKEN = environ.get("CONFLUENT_TOKEN")
-FILTER = environ.get("CONFLUENT_FILTER")
+FILTER = environ.get("CONFLUENT_FILTER") # cluster_id
 from enum import Enum
 
 
 class Metrics(Enum):
     ConsumerLag = "io.confluent.kafka.server/consumer_lag_offsets"
     TopTopics = "io.confluent.kafka.server/received_bytes"
+
+
+
+def bytes_to_mb(bytes_value):
+    """
+    Convert bytes to megabytes (MB), accurate to 3 decimal places.
+
+    Parameters:
+    - bytes_value (int or float): The number of bytes to convert.
+
+    Returns:
+    - float: The size in megabytes rounded to 3 decimal places.
+    """
+    if not isinstance(bytes_value, (int, float)):
+        raise TypeError("Input must be an integer or float representing bytes.")
+
+    mb_value = bytes_value / 1_000_000
+    return round(mb_value, 3)
 
 
 # TODO
