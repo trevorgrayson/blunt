@@ -9,7 +9,7 @@ To Map meters to values:
     map:METER3=fan.speed
 """
 #!/usr/bin/env python3
-import sys
+import sys, time
 import argparse
 import serial
 
@@ -41,7 +41,7 @@ def scale_value(value, max_input):
 def main():
     parser = argparse.ArgumentParser(description="Send statsd gauge metrics to Arduino over serial.")
     parser.add_argument("port", nargs="?", help="Serial port (e.g. /dev/ttyUSB0, COM3)")
-    parser.add_argument("--baud", type=int, default=9600, help="Baud rate (default: 9600)")
+    parser.add_argument("--baud", type=int, default=115200, help="Baud rate (default: 115200)")
     parser.add_argument("--scale", type=float, default=None,
                         help="Max expected input value for scaling to 0–255")
     parser.add_argument("--dryrun", action="store_true",
@@ -56,7 +56,12 @@ def main():
             sys.stderr.write("Error: Must specify a serial port unless using --dryrun\n")
             sys.exit(1)
         try:
-            ser = serial.Serial(args.port, args.baud, timeout=1)
+            ser = serial.Serial(args.port, args.baud,
+                                # bytesize=serial.EIGHTBITS,
+                                # parity=serial.PARITY_NONE,
+                                # stopbits=serial.STOPBITS_ONE,
+                                timeout=1)
+            time.sleep(3)
         except serial.SerialException as e:
             sys.stderr.write(f"Error opening serial port {args.port}: {e}\n")
             sys.exit(1)
@@ -67,7 +72,7 @@ def main():
         if args.dryrun:
             print(f"(map) {message}")
         else:
-            ser.write((message + "\n").encode("utf-8"))
+            ser.write((message + "\n").encode("ascii"))
 
     # Now process stdin metrics
     for line in sys.stdin:
@@ -85,7 +90,10 @@ def main():
         if args.dryrun:
             print(message)
         else:
-            ser.write((message + "\n").encode("utf-8"))
+            ser.write((message + "\r\n").encode("ascii"))
+            time.sleep(1)
+            resp = ser.readall()
+            print(resp)
 
 if __name__ == "__main__":
     main()
