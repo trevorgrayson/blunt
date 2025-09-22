@@ -1,5 +1,8 @@
 """
-PagerDuty Client
+PagerDuty REST API Client
+
+API Documentation: https://developer.pagerduty.com/api-reference/9d0b4b12e36f9-list-incidents
+Author: Trevor Grayson
 """
 from http.client import HTTPSConnection
 from json import loads

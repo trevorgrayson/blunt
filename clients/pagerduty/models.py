@@ -20,4 +20,10 @@ class Incident:
         return Incident(**kwargs)
 
     def __str__(self):
-        return f"Incident [{self.status}] {self.title}"
+        return "\t".join((
+            self.status,
+            self.urgency,
+            self.created_at,
+            self.title
+        ))
+

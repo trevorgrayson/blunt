@@ -13,7 +13,8 @@ parser.add_argument("--days", default=7, type=int,
 parser.add_argument("--count", action='store_true')
 parser.add_argument("--limit", type=int, default=100)
 parser.add_argument("--offset", type=int, default=0)
-parser.add_argument("--team")
+parser.add_argument("--team", default=None,
+                    help="Team ID")
 args = parser.parse_args()
 
 days_ago = datetime.now() - timedelta(days=args.days)
@@ -22,10 +23,11 @@ client = PagerDuty(TOKEN)
 
 params = dict(
     since=days_ago.date(),
-    team=args.team,
     limit=args.limit,
     offset=args.offset
 )
+if args.team:
+    params["team_ids[]"] = args.team
 
 count = 0
 incs = client.incidents(**params) # statuses=["resolved"],
