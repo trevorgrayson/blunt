@@ -132,7 +132,7 @@ def main():
     schema = os.environ.get("DATABRICKS_SCHEMA")
     statement = args.query or env("QUERY", required=False)
     if not statement:
-        sys.exit("Provide SQL via --query or QUERY env var")
+        statement = sys.stdin.read()
 
     # normalize host (no trailing slash)
     host = host.rstrip("/")

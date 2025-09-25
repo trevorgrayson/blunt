@@ -2,3 +2,4 @@ plotille
 atlassian-python-api
 ics
 pyserial
+openai
