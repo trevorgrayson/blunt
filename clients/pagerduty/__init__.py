@@ -26,8 +26,13 @@ class PagerDuty:
     def request(self, method, path, params=None):
         query = ''
         if params:
-            query = "&".join([f"{k}={v}" for k, v in params.items()])
-            query = "?" + query
+            for k, v in params.items():
+                if isinstance(v, list):
+                    for val in v:
+                        query += f'&{k}[]={val}'
+                else:
+                    query += f'&{k}={v}'
+            query = "?" + query[1:]
 
         self.conn.request(method, path + query,
                           headers=self.headers())
