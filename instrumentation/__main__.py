@@ -48,6 +48,8 @@ def main():
                         help="Print values instead of sending over serial (port not required)")
     parser.add_argument("--map", action="append", default=[],
                         help="Mapping command, e.g. --map METER1=cpu.load")
+    parser.add_argument("--echo", 
+                        help="Write stats to stdout as they are sent")
     args = parser.parse_args()
 
     ser = None
@@ -90,6 +92,8 @@ def main():
         if args.dryrun:
             print(message)
         else:
+            if args.echo:
+                print(message)
             ser.write((message + "\r\n").encode("ascii"))
             time.sleep(1)
             resp = ser.readall()

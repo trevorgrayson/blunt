@@ -14,7 +14,7 @@ n = range(0, len(results))
 values = [bytes_to_mb(result.value/(60)) for result in results]
 
 if args.format == 'statsd':
-    print(f"bytes_received:{values[-1]}|g")
+    print(f"bytes_received:{sum(values[-10:])}|g")
 
 elif args.format.startswith('g'):
     import plotille

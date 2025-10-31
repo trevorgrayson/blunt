@@ -16,6 +16,7 @@ int mapM2 = -1;
 int mapM3 = -1;
 
 String inputLine = "";
+char buffer[50];
 
 void setup() {
   Serial.begin(115200);
@@ -24,6 +25,10 @@ void setup() {
   pinMode(METER3, OUTPUT);
 
   Serial.println("Arduino ready. Use 'map:METERx=metric.name' to assign meters.");
+
+  voiceSetup();
+  delay(3000);
+  say("Would you like to play a game?");
 }
 
 void loop() {
@@ -39,12 +44,27 @@ void loop() {
   }
 
   // Continuously output mapped values
-  if (mapM1 >= 0) analogWrite(METER1, metricValues[mapM1]);
-  if (mapM2 >= 0) analogWrite(METER2, metricValues[mapM2]);
-  if (mapM3 >= 0) analogWrite(METER3, metricValues[mapM3]);
+  if (mapM1 >= 0) {
+    analogWrite(METER1, metricValues[mapM1]);
+    setSegment(metricValues[mapM1], 0);
+  }
+  if (mapM2 >= 0) {
+    analogWrite(METER2, metricValues[mapM2]);
+    setSegment(metricValues[mapM2], 1);
+  }
+  if (mapM3 >= 0) {
+    analogWrite(METER3, metricValues[mapM3]);
+    setSegment(metricValues[mapM3], 2);
+  }
 }
 
 void processLine(const String& line) {
+  if (line.startsWith("s")) {
+    line.substring(1).toCharArray(buffer, 50);
+    say(buffer);
+    return;
+  }
+
   if (line.startsWith("map:")) {
     handleMapping(line.substring(4));
     return;
@@ -71,6 +91,7 @@ void processLine(const String& line) {
   Serial.print(metric);
   Serial.print(" = ");
   Serial.println(value);
+  setupSegment();
 }
 
 /*
