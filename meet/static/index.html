@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Meet</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; }
+    h1, h2 { color: #333; }
+    input, textarea { width: 100%; padding: 0.4rem; margin: 0.3rem 0; }
+    button { padding: 0.4rem 0.8rem; margin-top: 0.5rem; }
+    .item { padding: 0.5rem; border-bottom: 1px solid #ddd; }
+    a { color: #0066cc; cursor: pointer; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<h1 id="title">Meet</h1>
+<div id="content"></div>
+
+<script>
+const api = location.origin;
+
+// --------- Navigation ----------
+window.addEventListener('popstate', () => route());
+function route() {
+  const path = location.hash.slice(1);
+  if (!path) return showSubjects();
+  const [subject] = path.split('/');
+  showSubjectDetail(subject);
+}
+
+// --------- Views ----------
+async function showSubjects() {
+  document.getElementById('title').innerText = 'Subjects';
+  const res = await fetch(`${api}/subjects`);
+  const subjects = await res.json();
+  const div = document.getElementById('content');
+  div.innerHTML = `
+    <input id="newSubj" placeholder="New subject name">
+    <button onclick="createSubject()">Add</button>
+    <hr>
+    ${subjects.map(s => `<div><a href="#${s.subject}">${s.subject}</a> - ${s.description ?? ''}</div>`).join('')}
+  `;
+}
+
+async function createSubject() {
+  const subj = document.getElementById('newSubj').value.trim();
+  if (!subj) return;
+  await fetch(`${api}/subjects`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({subject: subj})
+  });
+  showSubjects();
+}
+
+async function showSubjectDetail(subject) {
+  document.getElementById('title').innerText = subject;
+  const res = await fetch(`${api}/meet/${subject}`);
+  if (!res.ok) {
+    document.getElementById('content').innerHTML = `<p>Subject not found</p>`;
+    return;
+  }
+  const data = await res.json();
+  const div = document.getElementById('content');
+  div.innerHTML = `
+    <textarea id="desc">${data.description || ''}</textarea>
+    <button onclick="updateDesc('${subject}')">Save Description</button>
+    <h2>Agenda</h2>
+    <input id="newAgenda" placeholder="New agenda item">
+    <button onclick="addAgenda('${subject}')">Add</button>
+    <div id="agenda">
+      ${data.items.map(i => `
+        <div class="item">
+          ${i.body}
+          <button onclick="resolve('${subject}', ${i.id})">✔</button>
+        </div>`).join('')}
+    </div>
+    <p><a href="#" onclick="location.hash='';return false;">← Back</a></p>
+  `;
+}
+
+async function updateDesc(subject) {
+  const description = document.getElementById('desc').value;
+  await fetch(`${api}/subjects/${subject}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({description})
+  });
+}
+
+async function addAgenda(subject) {
+  const body = document.getElementById('newAgenda').value.trim();
+  if (!body) return;
+  await fetch(`${api}/meet/${subject}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({body})
+  });
+  showSubjectDetail(subject);
+}
+
+async function resolve(subject, id) {
+  await fetch(`${api}/meet/${subject}/${id}/resolve`, {method: 'POST'});
+  showSubjectDetail(subject);
+}
+
+route();
+</script>
+</body>
+</html>
+
