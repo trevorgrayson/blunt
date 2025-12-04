@@ -45,15 +45,64 @@ def is_screenshot_png(path: Path) -> bool:
     )
 
 
-def run_ocr_and_write_markdown(image_path: Path) -> None:
+def metadata_from_args(args: argparse.Namespace) -> dict:
+    """Collect metadata fields from CLI args into a dict."""
+    return {
+        "presenters": args.presenters or [],
+        "teams": args.teams or [],
+        "attendees": args.attendees or [],
+        "meeting_name": args.meeting_name or "",
+    }
+
+
+def build_header(image_path: Path, metadata: dict) -> str:
     """
-    Run tesseract on image_path and create a .txt file with a markdown header.
-    The header includes the file's modified timestamp.
+    Build a markdown/YAML-ish header string for the OCR text.
+
+    Includes:
+      - date/time from the image mtime
+      - optional meeting name, presenters, teams, attendees
     """
     mtime = datetime.fromtimestamp(image_path.stat().st_mtime)
     timestamp_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
 
-    header = f"# Slides - {timestamp_str}\n\n"
+    lines = []
+    lines.append("---")
+    lines.append(f'date: "{timestamp_str}"')
+
+    meeting_name = metadata.get("meeting_name") or ""
+    if meeting_name:
+        lines.append(f'meeting_name: "{meeting_name}"')
+
+    presenters = metadata.get("presenters") or []
+    if presenters:
+        lines.append("presenters:")
+        for p in presenters:
+            lines.append(f'  - "{p}"')
+
+    teams = metadata.get("teams") or []
+    if teams:
+        lines.append("teams:")
+        for t in teams:
+            lines.append(f'  - "{t}"')
+
+    attendees = metadata.get("attendees") or []
+    if attendees:
+        lines.append("attendees:")
+        for a in attendees:
+            lines.append(f'  - "{a}"')
+
+    lines.append("---")
+    lines.append("")  # blank line before OCR text
+    return "\n".join(lines) + "\n"
+
+
+def run_ocr_and_write_markdown(image_path: Path, metadata: dict) -> None:
+    """
+    Run tesseract on image_path and create a .txt file with a header.
+    Header includes date/time and optional meeting metadata.
+    """
+    header = build_header(image_path, metadata)
 
     result = subprocess.run(
         ["tesseract", str(image_path), "stdout"],
@@ -97,6 +146,8 @@ def cmd_move(args: argparse.Namespace) -> None:
     if not tesseract_available:
         print("Warning: 'tesseract' not found on PATH. OCR will be skipped.")
 
+    metadata = metadata_from_args(args)
+
     for item in desktop.iterdir():
         if item.is_dir():
             continue
@@ -108,7 +159,7 @@ def cmd_move(args: argparse.Namespace) -> None:
         # OCR only for Screenshot*.png
         if tesseract_available and is_screenshot_png(dest_path):
             try:
-                run_ocr_and_write_markdown(dest_path)
+                run_ocr_and_write_markdown(dest_path, metadata)
             except Exception as e:
                 print(f"Failed to OCR {dest_path}: {e}")
 
@@ -130,6 +181,8 @@ def cmd_refresh(args: argparse.Namespace) -> None:
     if not tesseract_available:
         raise RuntimeError("'tesseract' not found on PATH. Cannot process images.")
 
+    metadata = metadata_from_args(args)
+
     for dirpath, dirnames, filenames in os.walk(slides_root):
         dir_path = Path(dirpath)
         for filename in filenames:
@@ -146,12 +199,44 @@ def cmd_refresh(args: argparse.Namespace) -> None:
 
             print(f"Processing image: {img_path}")
             try:
-                run_ocr_and_write_markdown(img_path)
+                run_ocr_and_write_markdown(img_path, metadata)
             except Exception as e:
                 print(f"Failed to OCR {img_path}: {e}")
 
 
 # ------------------ CLI ------------------ #
+
+def add_metadata_arguments(subparser: argparse.ArgumentParser) -> None:
+    """
+    Add common metadata options used by both 'move' and 'refresh'.
+    """
+    subparser.add_argument(
+        "--presenter",
+        "--presenters",
+        dest="presenters",
+        action="append",
+        help="Presenter name (can be specified multiple times)",
+    )
+    subparser.add_argument(
+        "--team",
+        "--teams",
+        dest="teams",
+        action="append",
+        help="Team name (can be specified multiple times)",
+    )
+    subparser.add_argument(
+        "--attendee",
+        "--attendees",
+        dest="attendees",
+        action="append",
+        help="Attendee name (can be specified multiple times)",
+    )
+    subparser.add_argument(
+        "--meeting-name",
+        dest="meeting_name",
+        help="Name/title of the meeting",
+    )
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -164,6 +249,7 @@ def build_parser() -> argparse.ArgumentParser:
         "move",
         help="Move files from ~/Desktop to ~/.slides/YYYY/MM/DD and OCR screenshots",
     )
+    add_metadata_arguments(move_parser)
     move_parser.set_defaults(func=cmd_move)
 
     # slides.py refresh
@@ -171,6 +257,7 @@ def build_parser() -> argparse.ArgumentParser:
         "refresh",
         help="Recursively OCR any Screenshot*.png in ~/.slides missing .txt",
     )
+    add_metadata_arguments(refresh_parser)
     refresh_parser.set_defaults(func=cmd_refresh)
 
     return parser
@@ -184,3 +271,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
