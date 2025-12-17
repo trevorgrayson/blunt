@@ -1,0 +1,35 @@
+# Mapping from MySQL types to Databricks
+
+MYSQL_TO_DATABRICKS_TYPE_MAP = {
+    'TINYINT': 'TINYINT',
+    'SMALLINT': 'SMALLINT',
+    'MEDIUMINT': 'INT',
+    'INT': 'INT',
+    'INTEGER': 'INT',
+    'INT32': 'BIGINT',
+    'BIGINT': 'BIGINT',
+    'FLOAT': 'FLOAT',
+    'DOUBLE': 'DOUBLE',
+    'DECIMAL': 'DECIMAL',
+    'NUMERIC': 'DECIMAL',
+    'CHAR': 'STRING',
+    'VARCHAR': 'STRING',
+    'TEXT': 'STRING',
+    'TINYTEXT': 'STRING',
+    'MEDIUMTEXT': 'STRING',
+    'LONGTEXT': 'STRING',
+    'BLOB': 'BINARY',
+    'TINYBLOB': 'BINARY',
+    'MEDIUMBLOB': 'BINARY',
+    'LONGBLOB': 'BINARY',
+    'BINARY': 'BINARY',
+    'VARBINARY': 'BINARY',
+    'DATE': 'DATE',
+    'DATETIME': 'TIMESTAMP',
+    'TIMESTAMP': 'TIMESTAMP',
+    'TIME': 'STRING',  # stored as STRING
+    'YEAR': 'INT',
+    'ENUM': 'STRING',
+    'SET': 'STRING',
+    'JSON': 'STRING'
+}
