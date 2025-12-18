@@ -1,4 +1,5 @@
 
+from os import environ
 import json
 import urllib.parse
 import urllib.request
@@ -80,3 +81,46 @@ def traverse_downstream(host, token, root_table, visited, graph, depth=0, delay=
     for dep in downstream_objs:
         time.sleep(delay)
         traverse_downstream(host, token, dep, visited, graph, depth + 1)
+
+
+def impact(catalog, schema, host=None, token=None, delay=0.2, output="downstream_dependencies.json"):
+    """tbd API
+
+    TODO: memory issues
+    """
+    if host is None:
+        host = environ["DATABRICKS_HOST"]
+    if token is None:
+        token = environ["DATABRICKS_TOKEN"]
+    print(f"\n🔍 Scanning downstream dependencies for {catalog}.{schema} ...\n")
+
+    tables = list_tables_in_schema(host, token, catalog, schema)
+    if not tables:
+        print("No tables found in this schema.")
+        return
+
+    graph = {}
+    visited = set()
+
+    for tbl in tables:
+        traverse_downstream(host, token, tbl, visited, graph, delay=delay)
+
+    with open(output, "w") as f:
+        json.dump(graph, f, indent=2)
+
+    with open(output + ".tsv", "w") as f:
+        f.write(
+            "\t".join(["dataset", "owner", "created_by", "updated_by","email"])
+        )
+        for dataset, d in graph.items():
+            metadata = d["metadata"]
+            downstream = d["downstream"]
+            f.write(
+                "\t".join(map(str,
+                              [dataset, metadata["owner"], metadata["created_by"], metadata["updated_by"],
+                               metadata["email"]]
+                              )) + "\n"
+            )
+
+    print(f"\n✅ Completed. Found {len(graph)} objects.")
+    print(f"📄 Results saved to {output}\n")

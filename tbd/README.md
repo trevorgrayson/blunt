@@ -1,7 +1,17 @@
-# TBD
+# tbd
 
 Data utilities for effective Data Engineers
 
+Key Features:
+- data impact reports
+- hub-and-spoke schema management
+
+# `tbd impact`
+
+presently databricks only
+```
+tbd impact {catalog} {schema}
+```
 ## Schemas
 
 Utilities can be used to gather, define, and transfer schemas between systems.
