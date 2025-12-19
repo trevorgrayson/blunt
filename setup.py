@@ -29,6 +29,7 @@ setup(
         "console_scripts": [
             "blunt=widget:main", # data_diff.__main__:main https://github.com/datafold/data-diff/blob/master/pyproject.toml
             "meet=meet:main",
+            "tbd=tbd.__main__:main",
             "dossier=dossier:main",
             "cal.blunt=cal.__main__:main"
         ],

@@ -1,5 +1,6 @@
 class Employee:
     def __init__(self, name=None, **kwargs):
+        self.email = None
         if '@' in name:
             self.email = name
             self.name = name.lower().split("@")[0].replace('.', ' ')
@@ -16,7 +17,7 @@ class Employee:
         self.rest = kwargs
 
     def match(self, name):
-        return name in self.name
+        return name in self.name or name in self.email
 
     def __str__(self):
         return self.email
