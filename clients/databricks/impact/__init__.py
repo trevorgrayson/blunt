@@ -44,7 +44,6 @@ def get_downstream(host, token, full_name):
 
     # Notebooks? Views?
     for dep in lineage.get("downstreams", []):
-        print(dep)
         if dep.get("tableInfo"):
             downstream_objs.append(dep["tableInfo"]["catalog_name"] + "." +\
                                    dep["tableInfo"]["schema_name"] + "." +\

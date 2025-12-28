@@ -2,6 +2,7 @@ from yaml import dump as yaml_dump
 from .typemap import convert_mysql2spark
 from tbd.models import *
 from collections import OrderedDict
+from glob import glob
 
 def schema_csv_to_hub(fp):
     """
@@ -60,20 +61,39 @@ sources:
     { "".join(cols)}
 """
 
-def schema(args):
-    # convert schema formats
+def write_table(table, out_folder=None, database_name=None, formatter=None):
+    """
+    :param table_name:
+    :param out_folder:
+    :param database_name:
+    :param formatter:
+    :return:
+    """
+    if formatter is None:
+        formatter = to_source_yaml
+    out_filename = f"{out_folder}/{table.name}.source.yaml"
+    print(out_filename)
+    with open(out_filename, "w") as out_fp:
+        out_fp.write(formatter(table, database_name))
 
-    ## FROM
-    in_file = open(args.in_file, "r")
-    hub = schema_csv_to_hub(in_file)
 
-    # ditch fivetran tables
-    # _fivetran... columns
+def schema_read(schema_reader=None, **kwargs):
+    """
+    SHOULD return iterable schema object.
+    :param args:
+    :return:
+    """
+    if schema_reader is None:
+        schema_reader = schema_csv_to_hub
 
-    for table in hub:
-        out_filename = f"{args.out}/{table.name}.source.yaml"
-        print(out_filename)
-        with open(out_filename, "w") as out_fp:
-            out_fp.write(to_source_yaml(table, args.database))
 
-    in_file.close()
+    for filename in glob(kwargs.get('in_file', '**/*')):
+        in_file = open(filename, "r")
+        print(in_file)
+        hub = schema_reader(in_file)
+
+        for table in hub:
+            yield table
+
+def table_print(table):
+    print(table)
