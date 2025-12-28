@@ -77,6 +77,7 @@ def main():
                 write_table(table,
                             database_name=args.database,
                             out_folder=dest)
+            print(f"{dest} is current")
 
         case "impact":
             impact(*args.dataset, output=(".".join(args.dataset) + ".impact"))

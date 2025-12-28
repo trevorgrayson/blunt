@@ -3,7 +3,7 @@ from .typemap import convert_mysql2spark
 from tbd.models import *
 from collections import OrderedDict
 from glob import glob
-
+from os.path import join,isdir
 def schema_csv_to_hub(fp):
     """
     Convert a schema in CSV format to a dictionary representation.
@@ -85,9 +85,11 @@ def schema_read(schema_reader=None, **kwargs):
     """
     if schema_reader is None:
         schema_reader = schema_csv_to_hub
+    in_file = kwargs.get('in_file', '**/*')
+    if isdir(in_file):
+        in_file = join(in_file, '**/*')
 
-
-    for filename in glob(kwargs.get('in_file', '**/*')):
+    for filename in glob(in_file):
         in_file = open(filename, "r")
         print(in_file)
         hub = schema_reader(in_file)
