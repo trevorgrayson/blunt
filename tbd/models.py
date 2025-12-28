@@ -2,18 +2,19 @@ class Column:
     def __init__(
         self,
         name,
-        dtype,
+        dtype=None,
         nullable=None,
         default=None,
         primary_key=None,
         unique=None,
         metadata=None,
+        **extra
     ):
         if not name or not isinstance(name, str):
             raise ValueError("Column name must be a non-empty string")
 
         self.name = name
-        self.dtype = dtype
+        self.dtype = dtype or extra.get("type")
         self.nullable = nullable
         self.default = default
         self.primary_key = primary_key
@@ -38,9 +39,11 @@ class Column:
 
 
 class Table:
-    def __init__(self, name, columns):
+    def __init__(self, name, columns, **kwargs):
         self.name = name
         self._columns = {}
+        self.description = kwargs.get("description")
+        self.filename = kwargs.get("filename")
 
         for col in columns:
             self.add_column(col)
@@ -48,6 +51,8 @@ class Table:
         self._validate_primary_key()
 
     def add_column(self, column):
+        if isinstance(column, dict):
+            column = Column(**column)
         if column.name in self._columns:
             raise ValueError(
                 f"Duplicate column '{column.name}' in table '{self.name}'"
@@ -82,7 +87,8 @@ class Table:
         return None
 
     def __repr__(self):
-        return f"Table({self.name}, columns={[c.name for c in self.columns]})"
+        cols = " ".join([f'{c.name}:{c.dtype}' for c in self.columns])
+        return f"{self.name} ({cols})"
 
 
 class Database:

@@ -1,9 +1,12 @@
 from yaml import dump as yaml_dump
+import yaml
 from .typemap import convert_mysql2spark
 from tbd.models import *
 from collections import OrderedDict
 from glob import glob
 from os.path import join,isdir
+
+
 def schema_csv_to_hub(fp):
     """
     Convert a schema in CSV format to a dictionary representation.
@@ -20,11 +23,22 @@ def schema_csv_to_hub(fp):
         if table is None or table.name != table_name:
             if table is not None:
                 yield table
-            table = Table(name=table_name, columns=[])
+            table = Table(name=table_name, columns=[], filename=fp.name)
         table.add_column(Column(name=column_name, dtype=data_type))
 
     yield table
 
+
+def from_source_yaml(fp, database_name=None):
+    data = yaml.safe_load(fp)
+
+    for source in data.get("sources", []):
+        # TODO schema!
+        # print(source.get("name", "New Source"))
+
+        for d in source.get("tables", []):
+            table = Table(**d, filename=fp.name)
+            yield table
 
 def to_source_yaml(table, database_name=None):
     """
@@ -55,8 +69,9 @@ sources:
 - name: {database_name or ''}
   database: {database_name or ''}
   tables:
-  description: "Auto-Generated Documentation from TBD"
+  
   - name: {table.name}
+    description: "Auto-Generated Documentation from TBD"
     columns:
     { "".join(cols)}
 """
@@ -72,7 +87,6 @@ def write_table(table, out_folder=None, database_name=None, formatter=None):
     if formatter is None:
         formatter = to_source_yaml
     out_filename = f"{out_folder}/{table.name}.source.yaml"
-    print(out_filename)
     with open(out_filename, "w") as out_fp:
         out_fp.write(formatter(table, database_name))
 
@@ -87,11 +101,10 @@ def schema_read(schema_reader=None, **kwargs):
         schema_reader = schema_csv_to_hub
     in_file = kwargs.get('in_file', '**/*')
     if isdir(in_file):
-        in_file = join(in_file, '**/*')
+        in_file = join(in_file, '*')
 
     for filename in glob(in_file):
         in_file = open(filename, "r")
-        print(in_file)
         hub = schema_reader(in_file)
 
         for table in hub:

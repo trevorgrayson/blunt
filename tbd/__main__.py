@@ -3,9 +3,11 @@ Schema extraction
 """
 import argparse, sys
 from argparse import ArgumentParser
-from .schema import schema_read, write_table, table_print
+from .schema import schema_read, write_table, table_print, from_source_yaml
 from .impact import impact
 from enum import Enum
+from os.path import join
+from .editor import editor
 
 DATA_STORE = "databricks"
 
@@ -30,11 +32,6 @@ parser.add_argument("verb",
                     help="schema only supported at this time")
 # parser.add_argument("verb",
 #                     help="tra")
-# parser.add_argument("in_file",
-#                     help="input schema format"
-#                     )
-# parser.add_argument("out",
-#                     help="output schema format")
 parser.add_argument("--origin", dest="origin", default=HUB,
                     help="origin dataset, pipeline, or files to extract from. Defaults to the HUB.")
 parser.add_argument("--dest", default=HUB,
@@ -47,7 +44,7 @@ parser.add_argument("--database", default=None,
                     help="database name")
 parser.add_argument("--vendor", default=DATA_STORE,
                     help="database service")
-parser.add_argument("dataset", nargs=argparse.REMAINDER)
+parser.add_argument("rest", nargs=argparse.REMAINDER)
 
 if len(sys.argv) == 1:
     parser.print_help()
@@ -72,15 +69,37 @@ def main():
 
     match args.verb:
         case "schema": # read in schema from# file
-            for table in schema_read(in_file=origin):
+            # TODO
+            schema = schema_read(in_file=origin)
+            for table in schema:
                 table_print(table)
                 write_table(table,
                             database_name=args.database,
                             out_folder=dest)
             print(f"{dest} is current")
 
+        case "show":
+            target_table, *rest = args.rest
+            schema = schema_read(in_file=origin,
+                                 schema_reader=from_source_yaml)
+            for table in schema:
+                if not target_table:
+                    print(table.name)
+                elif table.name == target_table:
+                    print(table)
+        case "edit":
+            target_table, *rest = args.rest
+            schema = schema_read(in_file=origin,
+                                 schema_reader=from_source_yaml)
+            for table in schema:
+                if table.name == target_table:
+                    editor(table.filename)
+
         case "impact":
-            impact(*args.dataset, output=(".".join(args.dataset) + ".impact"))
+            # TODO, prob OK
+            dataset = args.rest
+            impact(*dataset,
+                   output=(".".join(dataset) + ".impact"))
 
         case _:
             raise NotImplementedError(f"Verb {args.verb} not implemented")
