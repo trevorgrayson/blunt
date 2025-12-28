@@ -4,7 +4,7 @@ from .typemap import convert_mysql2spark
 from tbd.models import *
 from collections import OrderedDict
 from glob import glob
-from os.path import join,isdir
+from os.path import join, isdir, isfile
 
 
 def schema_csv_to_hub(fp):
@@ -104,6 +104,9 @@ def schema_read(schema_reader=None, **kwargs):
         in_file = join(in_file, '*')
 
     for filename in glob(in_file):
+        if not isfile(filename):
+            continue
+
         in_file = open(filename, "r")
         hub = schema_reader(in_file)
 

@@ -4,6 +4,7 @@ import json
 import urllib.parse
 import urllib.request
 import time
+from tbd.models import ImpactReport
 
 # -------------------------
 # Databricks API Functions
@@ -104,22 +105,5 @@ def impact(catalog, schema, host=None, token=None, delay=0.2, output="downstream
     for tbl in tables:
         traverse_downstream(host, token, tbl, visited, graph, delay=delay)
 
-    with open(output, "w") as f:
-        json.dump(graph, f, indent=2)
-
-    with open(output + ".tsv", "w") as f:
-        f.write(
-            "\t".join(["dataset", "owner", "created_by", "updated_by","email"])
-        )
-        for dataset, d in graph.items():
-            metadata = d["metadata"]
-            downstream = d["downstream"]
-            f.write(
-                "\t".join(map(str,
-                              [dataset, metadata["owner"], metadata["created_by"], metadata["updated_by"],
-                               metadata["email"]]
-                              )) + "\n"
-            )
-
-    print(f"\n✅ Completed. Found {len(graph)} objects.")
-    print(f"📄 Results saved to {output}\n")
+    ir = ImpactReport(graph)
+    return ir

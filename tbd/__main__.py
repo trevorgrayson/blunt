@@ -16,7 +16,18 @@ impact reports
 tbd impact
 """
 EPILOG = """verbs:
+    import: add schema from an origin definition of tables.
+    e.g. `tbd --origin data/paycheckprediction_schemas.csv import`
+    
+    show: display tables or table 
+    e.g. `tbd show tablename`
+    
+    edit: modify a table schema
+    e.g. `tbd edit tablename`
+    
     impact: analyze downstream dependencies on schemas
+    e.g. `tbd impact main earnin`
+    
 """
 
 HUB = "hub"
@@ -68,8 +79,9 @@ def main():
         dest = args.hub
 
     match args.verb:
-        case "schema": # read in schema from# file
+        case "import": # `schema` read in schema from# file
             # TODO
+            print(origin)
             schema = schema_read(in_file=origin)
             for table in schema:
                 table_print(table)
@@ -79,7 +91,8 @@ def main():
             print(f"{dest} is current")
 
         case "show":
-            target_table, *rest = args.rest
+            *rest, target_table = args.rest
+            origin = join(origin, *rest)
             schema = schema_read(in_file=origin,
                                  schema_reader=from_source_yaml)
             for table in schema:
@@ -87,8 +100,10 @@ def main():
                     print(table.name)
                 elif table.name == target_table:
                     print(table)
+
         case "edit":
-            target_table, *rest = args.rest
+            *rest, target_table = args.rest
+            origin = join(origin, *rest)
             schema = schema_read(in_file=origin,
                                  schema_reader=from_source_yaml)
             for table in schema:
@@ -96,10 +111,12 @@ def main():
                     editor(table.filename)
 
         case "impact":
-            # TODO, prob OK
+            # TODO, needs testing
             dataset = args.rest
-            impact(*dataset,
-                   output=(".".join(dataset) + ".impact"))
+            ir = impact(*dataset,
+                        output=(".".join(dataset) + ".impact"))
+            ir.save("impact.graph")
+            ir.write_report(".".join(dataset) + ".impact.tsv")
 
         case _:
             raise NotImplementedError(f"Verb {args.verb} not implemented")

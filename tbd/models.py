@@ -1,3 +1,6 @@
+import json
+
+
 class Column:
     def __init__(
         self,
@@ -119,4 +122,31 @@ class Database:
         return list(self._tables.values())
 
     def __repr__(self):
-        return f"Database({self.name}, tables={[t.name for t in self.tables]})"
+        return f"DATABASE({self.name}, tables={[t.name for t in self.tables]})"
+
+#
+# results
+#
+
+class ImpactReport:
+    def __init__(self, graph):
+        self.graph = graph
+
+    def save(self, output_path):
+        with open(output_path, "w") as f:
+            json.dump(self.graph, f, indent=2)
+
+    def write_report(self, output_path):
+        with open(output_path + ".tsv", "w") as f:
+            f.write(
+                "\t".join(["dataset", "owner", "created_by", "updated_by", "email"])
+            )
+            for dataset, d in self.graph.items():
+                metadata = d["metadata"]
+                downstream = d["downstream"]
+                f.write(
+                    "\t".join(map(str,
+                                  [dataset, metadata["owner"], metadata["created_by"], metadata["updated_by"],
+                                   metadata["email"]]
+                                  )) + "\n"
+                )
