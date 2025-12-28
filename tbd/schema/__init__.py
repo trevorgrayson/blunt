@@ -5,7 +5,7 @@ from tbd.models import *
 from collections import OrderedDict
 from glob import glob
 from os.path import join, isdir, isfile
-
+from os import makedirs
 
 def schema_csv_to_hub(fp):
     """
@@ -86,7 +86,13 @@ def write_table(table, out_folder=None, database_name=None, formatter=None):
     """
     if formatter is None:
         formatter = to_source_yaml
-    out_filename = f"{out_folder}/{table.name}.source.yaml"
+    out = []
+    if out_folder:
+        out.append(out_folder)
+    if database_name:
+        out.append(database_name)
+    makedirs(join(*out), exist_ok=True)
+    out_filename = join(*out, f"{table.name}.source.yaml")
     with open(out_filename, "w") as out_fp:
         out_fp.write(formatter(table, database_name))
 
