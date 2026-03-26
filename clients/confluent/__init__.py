@@ -7,17 +7,27 @@ from collections import namedtuple
 # from metric_configs import Metrics
 
 QUERY_PATH = "/v2/metrics/cloud/query"
-KEY = environ.get("CONFLUENT_KEY")
-SECRET = environ.get("CONFLUENT_SECRET")
+KEY = environ.get("CONFLUENT_API_KEY")
+SECRET = environ.get("CONFLUENT_API_SECRET")
 TOKEN = environ.get("CONFLUENT_TOKEN")
 FILTER = environ.get("CONFLUENT_FILTER") # cluster_id
 from enum import Enum
 
-
 class Metrics(Enum):
+    ClusterLoadPercent = "io.confluent.kafka.server/cluster_load_percent"
     ConsumerLag = "io.confluent.kafka.server/consumer_lag_offsets"
     TopTopics = "io.confluent.kafka.server/received_bytes"
-
+    # TODO
+    # "io.confluent.kafka.server/request_bytes"
+    # "io.confluent.kafka.server/response_bytes"
+    # "io.confluent.kafka.server/received_records"
+    # "io.confluent.kafka.server/sent_records"
+    # "io.confluent.kafka.server/active_connection_count"
+    # cluster_load_percent_max
+    # cluster_load_percent_avg
+    # io.confluent.kafka.server/producer_latency_avg_milliseconds
+    # io.confluent.kafka.server/hot_partition_ingress
+    # io.confluent.kafka.server/hot_partition_egress
 
 
 def bytes_to_mb(bytes_value):
@@ -37,11 +47,6 @@ def bytes_to_mb(bytes_value):
     return round(mb_value, 3)
 
 
-# TODO
-# cluster_load_percent_max
-# cluster_load_percent_avg
-# io.confluent.kafka.server/producer_latency_avg_milliseconds
-# io.confluent.kafka.server/cluster_load_percent
 ConsumerLag = namedtuple("ConsumerLag", ["value", "group", "topic"])
 BytesPer = namedtuple("BytesPer", ["timestamp", "value"])
 # ClusterMetrics
@@ -51,7 +56,7 @@ class Confluent:
         self.host = host
         self.conn = HTTPSConnection(host)
         self.filter = filter
-        self.token = b64encode(bytes(f"{key}:{secret}", 'utf-8')).decode('utf-8')  # padding
+        self.token = b64encode(f"{key}:{secret}".encode()).decode()  # padding
 
     @property
     def headers(self):
@@ -61,8 +66,8 @@ class Confluent:
             "Authorization": f"Basic {self.token}"
         }
 
-    def query(self, metric:Metrics, group_by):
-        body = self.cluster_query(metric, group_by)
+    def query(self, metric:Metrics, group_by=None, **kwargs):
+        body = self.cluster_query(metric, group_by, **kwargs)
         return self.request(body)
 
     def request(self, body, method="POST"):
@@ -117,7 +122,7 @@ class Confluent:
     def cluster_load(self, granularity="PT1M", limit=25): # TODO
         # io.confluent.kafka.server/cluster_load_percent
         query = {
-            "aggregations": [{"metric": "confluent.kafka.server/cluster_load_percent"}],
+            "aggregations": [{"metric": Metrics.ClusterLoadPercent.value}],
             "filter": {
                 "field": "resource.kafka.id",
                 "op": "EQ",
@@ -159,7 +164,7 @@ class Confluent:
     # io.confluent.kafka.server/received_bytes
     # io.confluent.kafka.server/response_bytes
 
-    def cluster_query(self, metric: Metrics, group_by, filter=None, granularity="PT1H", limit=25):
+    def cluster_query(self, metric: Metrics, group_by=None, filter=None, granularity="PT1H", limit=25):
         if group_by is None:
             group_by = []
         if isinstance(group_by, str):
@@ -175,6 +180,7 @@ class Confluent:
             "value": filter
           }
         }
+        #if group_by:
         query["group_by"] = group_by
 
         if granularity is not None:

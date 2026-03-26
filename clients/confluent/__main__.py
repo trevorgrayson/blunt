@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from . import Confluent, bytes_to_mb
+from . import Confluent, bytes_to_mb, Metrics
 
 parser = ArgumentParser()
 parser.add_argument("--format", "-f", default="statsd")
@@ -15,6 +15,9 @@ values = [bytes_to_mb(result.value/(60)) for result in results]
 
 if args.format == 'statsd':
     print(f"bytes_received:{sum(values[-10:])}|g")
+    # print(client.cluster_load())
+    # print(client.query(Metrics.ClusterLoadPercent, group_by="resource.kafka.name", granularity="PT1M", limit=1))
+    # print(client.query(Metrics.ConsumerLag, group_by="resource.kafka.name", granularity="PT1M", limit=1))
 
 elif args.format.startswith('g'):
     import plotille
