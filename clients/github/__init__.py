@@ -54,37 +54,115 @@ class GithubPRClient:
         self.token = token
         self.username = username
 
+    def _headers(self):
+        if not self.token:
+            return {}
+        return {"Authorization": f"token {self.token}"}
+
     def fetch_open_prs(self, username=None):
         if username is None:
             username = self.username
         url = f"{API_URL}/search/issues?q=author:{username}+type:pr+state:open"
-        headers = {"Authorization": f"token {GITHUB_TOKEN}"}
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(url, headers=self._headers())
         resp.raise_for_status()
         return resp.json()["items"]
 
     def get_pr_details(self, pr_url):
-
-        headers = {"Authorization": f"token {GITHUB_TOKEN}"}
-
-        pr_resp = requests.get(pr_url, headers=headers)
+        pr_resp = requests.get(pr_url, headers=self._headers())
         pr_resp.raise_for_status()
         pr = pr_resp.json()
 
         reviews_url = pr_url + "/reviews"
 
-        reviews_resp = requests.get(reviews_url, headers=headers)
+        reviews_resp = requests.get(reviews_url, headers=self._headers())
         reviews_resp.raise_for_status()
         reviews = reviews_resp.json()
         self.reviews = reviews
+
+        issue_comments = self._fetch_issue_comments(pr)
+        review_comments = self._fetch_review_comments(pr)
+        action_items = self._build_action_items(pr, reviews, issue_comments, review_comments)
 
         return {
             "title": pr["title"],
             "status": pr.get("mergeable_state", "unknown"),
             "comments": pr["comments"] + pr["review_comments"],
             "url": pr["html_url"],
-            "review_status": get_review_status(reviews)
+            "review_status": get_review_status(reviews),
+            "action_items": action_items,
         }
+
+    def _fetch_issue_comments(self, pr):
+        comments_url = pr.get("comments_url")
+        if not comments_url:
+            return []
+        resp = requests.get(comments_url, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def _fetch_review_comments(self, pr):
+        comments_url = pr.get("review_comments_url")
+        if not comments_url:
+            return []
+        resp = requests.get(comments_url, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def _latest_reviews_by_user(self, reviews):
+        latest = {}
+        for review in sorted(reviews, key=lambda r: r.get("submitted_at") or ""):
+            user = (review.get("user") or {}).get("login")
+            if not user:
+                continue
+            latest[user] = review
+        return latest
+
+    def _snippet(self, text, limit=120):
+        if not text:
+            return ""
+        compact = " ".join(text.split())
+        if len(compact) <= limit:
+            return compact
+        return compact[: limit - 3] + "..."
+
+    def _build_action_items(self, pr, reviews, issue_comments, review_comments):
+        action_items = []
+        latest_reviews = self._latest_reviews_by_user(reviews)
+
+        for user, review in latest_reviews.items():
+            state = review.get("state")
+            if state == "CHANGES_REQUESTED":
+                action_items.append(f"Address changes requested by {user}.")
+            elif state == "COMMENTED":
+                action_items.append(f"Review feedback from {user}.")
+
+        for comment in issue_comments:
+            commenter = (comment.get("user") or {}).get("login")
+            if not commenter or commenter == self.username:
+                continue
+            body = self._snippet(comment.get("body", ""))
+            if body:
+                action_items.append(f"Reply to {commenter}: {body}")
+            else:
+                action_items.append(f"Reply to {commenter}.")
+
+        for comment in review_comments:
+            commenter = (comment.get("user") or {}).get("login")
+            if not commenter or commenter == self.username:
+                continue
+            path = comment.get("path")
+            line = comment.get("line") or comment.get("position")
+            location = f" on {path}:{line}" if path and line else ""
+            body = self._snippet(comment.get("body", ""))
+            if body:
+                action_items.append(f"Review comment from {commenter}{location}: {body}")
+            else:
+                action_items.append(f"Review comment from {commenter}{location}.")
+
+        if not action_items:
+            action_items.append("No action items detected.")
+
+        return action_items
 
     def load_prs(self):
         def pr_init(pr):
@@ -101,6 +179,6 @@ class GithubPRClient:
             pr["full_text"] = full_text
             return pr
 
-        raw_prs = self.fetch_open_prs(GITHUB_USERNAME)
+        raw_prs = self.fetch_open_prs(self.username)
         prs = [pr_init(self.get_pr_details(pr["pull_request"]["url"])) for pr in raw_prs]
         return prs
