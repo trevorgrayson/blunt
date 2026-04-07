@@ -72,7 +72,10 @@ def run_mcp_server(read_only: bool = False) -> int:
                             "body": {"type": "string"},
                             "assignee": {"type": "string"},
                             "tags": {"type": "array", "items": {"type": "string"}},
-                            "status": {"type": "string"},
+                            "status": {
+                                "type": "string",
+                                "enum": ["todo", "in-progress", "in-review", "blocked", "done"],
+                            },
                         },
                         "required": ["subject"],
                     },

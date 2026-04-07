@@ -27,7 +27,7 @@ The first argument will be tested as a tkts "verb" and be used choose the action
 
 `todo` (or `list`) is the default verb. It will return your present list of tickets even if no verb is provided.
 `new` will take the remainder of the text and create a tkt with that Subject.
-Use `--status` to attach a status header (e.g., `tkts new "Fix CI flake" --status blocked`).
+Use `--status` to attach a status header (e.g., `tkts new "Fix CI flake" --status in-progress`).
 `edit` will allow interactive editing of the tkt. For the default storage engine, this may shell out to $EDITOR.
 `plan` will open a PRD file for refinement until actionable, with `--exec` to walk tasks.
 `mcp` launches an MCP server for Agents to interact with. the `--read-only` option will prevent writes.
@@ -43,7 +43,7 @@ Ticket files are stored in a format that is parsable as the Internet Message For
 
 ### Status
 
-Tickets can include a `Status` header. Status values are free-form, but the following are recommended:
+Tickets can include a `Status` header. Status values are validated on create, with these recommended values:
 
 - `todo`: use when a ticket is ready to be picked up.
 - `in-progress`: use when work is actively underway.

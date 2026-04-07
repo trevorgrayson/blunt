@@ -42,7 +42,7 @@ def _parse_args() -> ArgumentParser:
     parser.add_argument(
         "--status",
         default=None,
-        help="Optional status for new tickets (e.g., blocked, done).",
+        help="Optional status for new tickets (todo, in-progress, in-review, blocked, done).",
     )
     parser.add_argument(
         "--exec",
