@@ -36,3 +36,21 @@ def test_cli_update_and_tail(tmp_path: os.PathLike[str], capsys, monkeypatch) ->
 
     assert "status todo -> in-progress" in tail_output
     assert "comment added" in tail_output
+
+
+def test_cli_done_marks_ticket_complete(tmp_path: os.PathLike[str], capsys, monkeypatch) -> None:
+    store = TicketStore(root=tmp_path)
+    ticket = store.create_ticket(subject="CLI done ticket", body="Body", status="in-progress")
+
+    output = _run_cli(
+        ["done", ticket.ticket_id],
+        tmp_path,
+        capsys,
+        monkeypatch,
+    )
+
+    assert "Updated" in output
+
+    updated = store.get_ticket(ticket.ticket_id)
+    assert updated is not None
+    assert updated.status == "done"

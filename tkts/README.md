@@ -30,6 +30,7 @@ The first argument will be tested as a tkts "verb" and be used choose the action
 Use `--status` to attach a status header (e.g., `tkts new "Fix CI flake" --status in-progress`).
 `edit` will allow interactive editing of the tkt. For the default storage engine, this may shell out to $EDITOR.
 `update` will apply structured updates to a ticket (status, subject, body, comments).
+`done` marks a ticket complete (sets status to `done`).
 `show` prints a ticket by id (prefixes are accepted if unambiguous).
 `tail` prints recent change log entries for a ticket.
 `plan` will open a PRD file for refinement until actionable, with `--exec` to walk tasks.
