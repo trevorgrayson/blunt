@@ -13,6 +13,7 @@ from tkts.models import Ticket
 
 
 _ALLOWED_STATUSES = {"todo", "in-progress", "in-review", "blocked", "done"}
+_CHANGE_LOG_HEADER = "Change Log:"
 
 
 def _normalize_status(status: Optional[str]) -> Optional[str]:
@@ -29,6 +30,60 @@ def _normalize_status(status: Optional[str]) -> Optional[str]:
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _normalize_optional_string(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _normalize_tags(tags: Optional[Iterable[str]]) -> Optional[List[str]]:
+    if tags is None:
+        return None
+    normalized = [tag.strip() for tag in tags if tag.strip()]
+    return normalized
+
+
+def _extract_change_log(documents: List[str]) -> tuple[Optional[int], List[str]]:
+    for idx, document in enumerate(documents):
+        if not document:
+            continue
+        lines = document.splitlines()
+        if not lines:
+            continue
+        if lines[0].strip() != _CHANGE_LOG_HEADER:
+            continue
+        entries = [line for line in lines[1:] if line.strip()]
+        return idx, entries
+    return None, []
+
+
+def _format_change_log(entries: List[str]) -> str:
+    payload = [_CHANGE_LOG_HEADER, *entries]
+    return "\n".join(payload).rstrip() + "\n"
+
+
+def _append_body_block(body: str, label: str, message: str, timestamp: str) -> str:
+    header = f"{label} ({timestamp})"
+    block = f"{header}\n{message.strip()}"
+    if not body:
+        return f"{block}\n"
+    return f"{body.rstrip()}\n\n---\n{block}\n"
+
+
+def _coerce_documents(ticket: Ticket) -> List[str]:
+    if ticket.documents:
+        return list(ticket.documents)
+    if ticket.body:
+        return [ticket.body]
+    return []
+
+
+def _update_documents(ticket: Ticket, documents: List[str]) -> None:
+    ticket.documents = documents
+    ticket.body = documents[0] if documents else ""
 
 
 def _find_config_path(start: Path) -> Optional[Path]:
@@ -183,3 +238,100 @@ class TicketStore:
         ticket.updated_at = _utc_now_iso()
         self.save_ticket(ticket)
         return ticket
+
+    def update_ticket(
+        self,
+        ticket_id: str,
+        subject: Optional[str] = None,
+        body: Optional[str] = None,
+        assignee: Optional[str] = None,
+        tags: Optional[Iterable[str]] = None,
+        status: Optional[str] = None,
+        append_body: Optional[str] = None,
+        comment: Optional[str] = None,
+        log_message: Optional[str] = None,
+    ) -> Ticket:
+        ticket = self.get_ticket(ticket_id)
+        if not ticket:
+            raise FileNotFoundError(f"Ticket {ticket_id} not found.")
+
+        changes: List[str] = []
+        now = _utc_now_iso()
+
+        if subject is not None:
+            normalized_subject = subject.strip()
+            if not normalized_subject:
+                raise ValueError("Subject cannot be empty.")
+            if normalized_subject != ticket.subject:
+                changes.append(f"- {now} subject updated")
+                ticket.subject = normalized_subject
+
+        if body is not None:
+            if body != ticket.body:
+                changes.append(f"- {now} body replaced")
+                ticket.body = body
+
+        if assignee is not None:
+            normalized_assignee = _normalize_optional_string(assignee)
+            if normalized_assignee != ticket.assignee:
+                changes.append(f"- {now} assignee updated")
+                ticket.assignee = normalized_assignee
+
+        if tags is not None:
+            normalized_tags = _normalize_tags(tags) or []
+            if normalized_tags != ticket.tags:
+                changes.append(f"- {now} tags updated")
+                ticket.tags = normalized_tags
+
+        if status is not None:
+            normalized_status = _normalize_optional_string(status)
+            normalized_status = _normalize_status(normalized_status)
+            if normalized_status != ticket.status:
+                from_status = ticket.status or "unknown"
+                to_status = normalized_status or "unknown"
+                changes.append(f"- {now} status {from_status} -> {to_status}")
+                ticket.status = normalized_status
+
+        append_body_text = _normalize_optional_string(append_body)
+        if append_body_text:
+            changes.append(f"- {now} body appended")
+            ticket.body = _append_body_block(ticket.body, "Update", append_body_text, now)
+
+        comment_text = _normalize_optional_string(comment)
+        if comment_text:
+            changes.append(f"- {now} comment added")
+            ticket.body = _append_body_block(ticket.body, "Comment", comment_text, now)
+
+        if log_message:
+            changes.append(f"- {now} note: {log_message.strip()}")
+
+        if changes:
+            documents = _coerce_documents(ticket)
+            if documents:
+                documents[0] = ticket.body
+            else:
+                documents = [ticket.body]
+
+            change_idx, entries = _extract_change_log(documents)
+            entries.extend(changes)
+            change_doc = _format_change_log(entries)
+            if change_idx is None:
+                documents.append(change_doc)
+            else:
+                documents[change_idx] = change_doc
+            _update_documents(ticket, documents)
+
+            ticket.updated_at = now
+            self.save_ticket(ticket)
+
+        return ticket
+
+    def tail_ticket_changelog(self, ticket_id: str, limit: int = 10) -> List[str]:
+        ticket = self.get_ticket(ticket_id)
+        if not ticket:
+            raise FileNotFoundError(f"Ticket {ticket_id} not found.")
+        documents = _coerce_documents(ticket)
+        _, entries = _extract_change_log(documents)
+        if limit <= 0:
+            return []
+        return entries[-limit:]

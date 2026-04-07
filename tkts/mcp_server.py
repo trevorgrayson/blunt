@@ -59,6 +59,18 @@ def run_mcp_server(read_only: bool = False) -> int:
                     "required": ["ticket_id"],
                 },
             ),
+            Tool(
+                name="tail_ticket_changelog",
+                description="Tail a ticket change log.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "ticket_id": {"type": "string"},
+                        "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+                    },
+                    "required": ["ticket_id"],
+                },
+            ),
         ]
         if not read_only:
             tools.append(
@@ -78,6 +90,30 @@ def run_mcp_server(read_only: bool = False) -> int:
                             },
                         },
                         "required": ["subject"],
+                    },
+                )
+            )
+            tools.append(
+                Tool(
+                    name="update_ticket",
+                    description="Update ticket fields, status, or append comments.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "ticket_id": {"type": "string"},
+                            "subject": {"type": "string"},
+                            "body": {"type": "string"},
+                            "assignee": {"type": "string"},
+                            "tags": {"type": "array", "items": {"type": "string"}},
+                            "status": {
+                                "type": "string",
+                                "enum": ["todo", "in-progress", "in-review", "blocked", "done"],
+                            },
+                            "append_body": {"type": "string"},
+                            "comment": {"type": "string"},
+                            "log_message": {"type": "string"},
+                        },
+                        "required": ["ticket_id"],
                     },
                 )
             )
@@ -166,6 +202,32 @@ def run_mcp_server(read_only: bool = False) -> int:
                 status=str(status) if status else None,
             )
             return [TextContent(type="text", text=json.dumps(_ticket_to_dict(ticket), ensure_ascii=True))]
+        if name == "update_ticket":
+            if read_only:
+                raise ValueError("update_ticket is disabled in read-only mode")
+            ticket_id = arguments.get("ticket_id")
+            if not ticket_id:
+                raise ValueError("ticket_id is required")
+            ticket = backend.update_ticket(
+                str(ticket_id),
+                subject=arguments.get("subject"),
+                body=arguments.get("body"),
+                assignee=arguments.get("assignee"),
+                tags=arguments.get("tags") if isinstance(arguments.get("tags"), list) else None,
+                status=arguments.get("status"),
+                append_body=arguments.get("append_body"),
+                comment=arguments.get("comment"),
+                log_message=arguments.get("log_message"),
+            )
+            return [TextContent(type="text", text=json.dumps(_ticket_to_dict(ticket), ensure_ascii=True))]
+        if name == "tail_ticket_changelog":
+            ticket_id = arguments.get("ticket_id")
+            if not ticket_id:
+                raise ValueError("ticket_id is required")
+            limit = arguments.get("limit")
+            limit_value = int(limit) if limit is not None else 10
+            entries = backend.tail_ticket_changelog(str(ticket_id), limit=limit_value)
+            return [TextContent(type="text", text=json.dumps(entries, ensure_ascii=True))]
 
         raise ValueError(f"Unknown tool: {name}")
 

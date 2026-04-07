@@ -16,7 +16,7 @@ def _parse_args() -> ArgumentParser:
         "verb",
         nargs="?",
         default="todo",
-        help="Action to perform: list/todo (default), new, edit, show, plan, or mcp.",
+        help="Action to perform: list/todo (default), new, edit, update, show, tail, plan, or mcp.",
     )
     parser.add_argument(
         "subject",
@@ -26,7 +26,7 @@ def _parse_args() -> ArgumentParser:
     )
     parser.add_argument(
         "--body",
-        default="",
+        default=None,
         help="Optional body for new tickets.",
     )
     parser.add_argument(
@@ -36,13 +36,39 @@ def _parse_args() -> ArgumentParser:
     )
     parser.add_argument(
         "--tags",
-        default="",
+        default=None,
         help="Comma-separated list of tags.",
     )
     parser.add_argument(
         "--status",
         default=None,
         help="Optional status for new tickets (todo, in-progress, in-review, blocked, done).",
+    )
+    parser.add_argument(
+        "--set-subject",
+        default=None,
+        help="Set a new subject when updating a ticket.",
+    )
+    parser.add_argument(
+        "--append-body",
+        default=None,
+        help="Append an update block to the ticket body.",
+    )
+    parser.add_argument(
+        "--comment",
+        default=None,
+        help="Append a comment block to the ticket body.",
+    )
+    parser.add_argument(
+        "--log-message",
+        default=None,
+        help="Add a freeform message to the change log.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Limit entries when tailing a change log.",
     )
     parser.add_argument(
         "--exec",
@@ -71,7 +97,9 @@ def _render_list(backend: Backend) -> int:
     return 0
 
 
-def _parse_tags(raw: str) -> List[str]:
+def _parse_tags(raw: Optional[str]) -> List[str]:
+    if not raw:
+        return []
     return [tag.strip() for tag in raw.split(",") if tag.strip()]
 
 
@@ -87,7 +115,7 @@ def _normalize_subject(subject_parts: Optional[Sequence[str]]) -> Optional[str]:
 def _handle_new(
     backend: Backend,
     subject_parts: Optional[Sequence[str] | str],
-    body: str,
+    body: Optional[str],
     assignee: Optional[str],
     tags: List[str],
     status: Optional[str],
@@ -97,7 +125,7 @@ def _handle_new(
         raise SystemExit("Subject is required for new tickets.")
     ticket = backend.create_ticket(
         subject=subject,
-        body=body,
+        body=body or "",
         assignee=assignee,
         tags=tags,
         status=status,
@@ -122,6 +150,43 @@ def _handle_show(backend: Backend, ticket_id: str) -> int:
     if ticket.body:
         print("")
         print(ticket.body)
+    return 0
+
+
+def _handle_update(
+    backend: Backend,
+    ticket_id: str,
+    subject: Optional[str],
+    body: Optional[str],
+    assignee: Optional[str],
+    tags: Optional[List[str]],
+    status: Optional[str],
+    append_body: Optional[str],
+    comment: Optional[str],
+    log_message: Optional[str],
+) -> int:
+    ticket = backend.update_ticket(
+        ticket_id,
+        subject=subject,
+        body=body,
+        assignee=assignee,
+        tags=tags,
+        status=status,
+        append_body=append_body,
+        comment=comment,
+        log_message=log_message,
+    )
+    print(f"Updated {ticket.ticket_id}: {ticket.subject}")
+    return 0
+
+
+def _handle_tail(backend: Backend, ticket_id: str, limit: int) -> int:
+    entries = backend.tail_ticket_changelog(ticket_id, limit=limit)
+    if not entries:
+        print("No change log entries found.")
+        return 0
+    for entry in entries:
+        print(entry)
     return 0
 
 
@@ -202,12 +267,36 @@ def main() -> int:
         ticket = backend.edit_ticket(args.subject[0])
         print(f"Updated {ticket.ticket_id}: {ticket.subject}")
         return 0
+    if verb == "update":
+        if not args.subject:
+            raise SystemExit("Ticket id is required for update.")
+        if len(args.subject) != 1:
+            raise SystemExit("Ticket id is required for update.")
+        tags = _parse_tags(args.tags) if args.tags is not None else None
+        return _handle_update(
+            backend,
+            args.subject[0],
+            args.set_subject,
+            args.body,
+            args.assignee,
+            tags,
+            args.status,
+            args.append_body,
+            args.comment,
+            args.log_message,
+        )
     if verb == "show":
         if not args.subject:
             raise SystemExit("Ticket id is required for show.")
         if len(args.subject) != 1:
             raise SystemExit("Ticket id is required for show.")
         return _handle_show(backend, args.subject[0])
+    if verb == "tail":
+        if not args.subject:
+            raise SystemExit("Ticket id is required for tail.")
+        if len(args.subject) != 1:
+            raise SystemExit("Ticket id is required for tail.")
+        return _handle_tail(backend, args.subject[0], args.limit)
     if verb == "mcp":
         from tkts.mcp_server import run_mcp_server
 
