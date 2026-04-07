@@ -15,10 +15,5 @@ requirements
 - Default storage engine root is `$HOME/.tkts`, configurable via `.tkts/config` or `TKTS_ROOT`.
 - Ticket files use Internet Message Format-like headers (e.g., `Subject`, `Assignee`) with a body for details, supporting multiple documents.
 - pyproject.toml for cli
-- tkts mcp launches a mcp server using https://github.com/modelcontextprotocol/python-sdk
-done
-- implemented local file storage and retrieval with tags plus basic `tkts list` and `tkts new` CLI support
-- documented README requirements in PRD
-- added `tkts edit` to open tickets in $EDITOR and persist updated timestamps
-- handled multi-word todo intake when the first argument is not a verb
-- added `.tkts/config` discovery to configure storage root (supports `root=` or `TKTS_ROOT=` values)
+- `tkts mcp` launches a mcp server using https://github.com/modelcontextprotocol/python-sdk
+- ensure the readme is kept up to date. include getting

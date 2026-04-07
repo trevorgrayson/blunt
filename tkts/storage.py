@@ -25,22 +25,40 @@ def _find_config_path(start: Path) -> Optional[Path]:
     return None
 
 
-def _read_root_from_config(path: Path) -> Optional[str]:
+@dataclass
+class TktsConfig:
+    root: Optional[str] = None
+    backend: Optional[str] = None
+
+
+def _read_config(path: Path) -> TktsConfig:
+    config = TktsConfig()
     try:
         contents = path.read_text(encoding="utf-8")
     except OSError:
-        return None
+        return config
     for line in contents.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
         if "=" in stripped:
             key, value = stripped.split("=", 1)
-            if key.strip().lower() in {"root", "tkts_root"}:
-                return value.strip()
+            normalized = key.strip().lower()
+            if normalized in {"root", "tkts_root"}:
+                config.root = value.strip()
+            elif normalized in {"backend", "tkts_backend"}:
+                config.backend = value.strip()
             continue
-        return stripped
-    return None
+        if config.root is None:
+            config.root = stripped
+    return config
+
+
+def load_config(start: Optional[Path] = None) -> TktsConfig:
+    candidate = _find_config_path((start or Path.cwd()))
+    if not candidate:
+        return TktsConfig()
+    return _read_config(candidate)
 
 
 @dataclass
@@ -52,11 +70,9 @@ class TicketStore:
         root = os.environ.get("TKTS_ROOT")
         if root:
             return cls(Path(root).expanduser())
-        config_path = _find_config_path(Path.cwd())
-        if config_path:
-            config_root = _read_root_from_config(config_path)
-            if config_root:
-                return cls(Path(config_root).expanduser())
+        config = load_config()
+        if config.root:
+            return cls(Path(config.root).expanduser())
         return cls(Path.home() / ".tkts")
 
     def ensure(self) -> None:

@@ -19,6 +19,7 @@ The first argument will be tested as a tkts "verb" and be used choose the action
 `todo` (or `list`) is the default verb. It will return your present list of tickets even if no verb is provided.
 `new` will take the remainder of the text and create a tkt with that Subject.
 `edit` will allow interactive editing of the tkt. For the default storage engine, this may shell out to $EDITOR.
+`mcp` launches an MCP server for Agents to interact with. the `--read-only` option will prevent writes.
 
 ## Engines
 

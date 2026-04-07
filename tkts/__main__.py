@@ -3,7 +3,7 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from typing import List, Optional, Sequence
 
-from tkts.storage import TicketStore
+from tkts.backends import Backend, get_backend_from_env
 
 
 def _parse_args() -> ArgumentParser:
@@ -12,7 +12,7 @@ def _parse_args() -> ArgumentParser:
         "verb",
         nargs="?",
         default="list",
-        help="Action to perform: list (default), new, or edit.",
+        help="Action to perform: list (default), new, edit, or mcp.",
     )
     parser.add_argument(
         "subject",
@@ -38,8 +38,8 @@ def _parse_args() -> ArgumentParser:
     return parser
 
 
-def _render_list(store: TicketStore) -> int:
-    tickets = store.list_tickets()
+def _render_list(backend: Backend) -> int:
+    tickets = backend.list_tickets()
     if not tickets:
         print("No tickets found.")
         return 0
@@ -64,7 +64,7 @@ def _normalize_subject(subject_parts: Optional[Sequence[str]]) -> Optional[str]:
 
 
 def _handle_new(
-    store: TicketStore,
+    backend: Backend,
     subject_parts: Optional[Sequence[str] | str],
     body: str,
     assignee: Optional[str],
@@ -73,7 +73,7 @@ def _handle_new(
     subject = _normalize_subject(subject_parts)
     if not subject:
         raise SystemExit("Subject is required for new tickets.")
-    ticket = store.create_ticket(subject=subject, body=body, assignee=assignee, tags=tags)
+    ticket = backend.create_ticket(subject=subject, body=body, assignee=assignee, tags=tags)
     print(f"Created {ticket.ticket_id}: {ticket.subject}")
     return 0
 
@@ -81,27 +81,31 @@ def _handle_new(
 def main() -> int:
     parser = _parse_args()
     args = parser.parse_args()
-    store = TicketStore.from_env()
+    backend = get_backend_from_env()
 
     verb = args.verb or "list"
     if verb in {"list", "todo"}:
-        return _render_list(store)
+        return _render_list(backend)
     if verb == "new":
-        return _handle_new(store, args.subject, args.body, args.assignee, _parse_tags(args.tags))
+        return _handle_new(backend, args.subject, args.body, args.assignee, _parse_tags(args.tags))
     if verb == "edit":
         if not args.subject:
             raise SystemExit("Ticket id is required for edit.")
         if len(args.subject) != 1:
             raise SystemExit("Ticket id is required for edit.")
-        ticket = store.edit_ticket(args.subject[0])
+        ticket = backend.edit_ticket(args.subject[0])
         print(f"Updated {ticket.ticket_id}: {ticket.subject}")
         return 0
+    if verb == "mcp":
+        from tkts.mcp_server import run_mcp_server
+
+        return run_mcp_server()
 
     if verb:
         subject_parts = [verb]
         if args.subject:
             subject_parts.extend(args.subject)
-        return _handle_new(store, subject_parts, args.body, args.assignee, _parse_tags(args.tags))
+        return _handle_new(backend, subject_parts, args.body, args.assignee, _parse_tags(args.tags))
 
     raise SystemExit(f"Unknown verb: {verb}")
 
