@@ -99,6 +99,18 @@ class TicketStore:
     def _ticket_path(self, ticket_id: str) -> Path:
         return self.ticket_dir() / f"{ticket_id}.tkt"
 
+    def _resolve_ticket_id(self, ticket_id: str) -> Optional[str]:
+        if not ticket_id:
+            return None
+        if self._ticket_path(ticket_id).exists():
+            return ticket_id
+        matches = [candidate for candidate in self.list_ids() if candidate.startswith(ticket_id)]
+        if not matches:
+            return None
+        if len(matches) > 1:
+            raise ValueError(f"Multiple tickets match '{ticket_id}'. Be more specific.")
+        return matches[0]
+
     def list_ids(self) -> List[str]:
         directory = self.ticket_dir()
         if not directory.exists():
@@ -114,11 +126,14 @@ class TicketStore:
         return tickets
 
     def get_ticket(self, ticket_id: str) -> Optional[Ticket]:
-        path = self._ticket_path(ticket_id)
+        resolved_id = self._resolve_ticket_id(ticket_id)
+        if not resolved_id:
+            return None
+        path = self._ticket_path(resolved_id)
         if not path.exists():
             return None
         raw = path.read_text(encoding="utf-8")
-        return Ticket.from_string(raw, fallback_id=ticket_id)
+        return Ticket.from_string(raw, fallback_id=resolved_id)
 
     def save_ticket(self, ticket: Ticket) -> None:
         self.ensure()
@@ -152,7 +167,10 @@ class TicketStore:
         return ticket
 
     def edit_ticket(self, ticket_id: str) -> Ticket:
-        path = self._ticket_path(ticket_id)
+        resolved_id = self._resolve_ticket_id(ticket_id)
+        if not resolved_id:
+            raise FileNotFoundError(f"Ticket {ticket_id} not found.")
+        path = self._ticket_path(resolved_id)
         if not path.exists():
             raise FileNotFoundError(f"Ticket {ticket_id} not found.")
 
@@ -161,7 +179,7 @@ class TicketStore:
         subprocess.run(command, check=False)
 
         raw = path.read_text(encoding="utf-8")
-        ticket = Ticket.from_string(raw, fallback_id=ticket_id)
+        ticket = Ticket.from_string(raw, fallback_id=resolved_id)
         ticket.updated_at = _utc_now_iso()
         self.save_ticket(ticket)
         return ticket

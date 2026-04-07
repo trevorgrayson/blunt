@@ -16,7 +16,7 @@ def _parse_args() -> ArgumentParser:
         "verb",
         nargs="?",
         default="todo",
-        help="Action to perform: list/todo (default), new, edit, plan, or mcp.",
+        help="Action to perform: list/todo (default), new, edit, show, plan, or mcp.",
     )
     parser.add_argument(
         "subject",
@@ -106,6 +106,25 @@ def _handle_new(
     return 0
 
 
+def _handle_show(backend: Backend, ticket_id: str) -> int:
+    ticket = backend.get_ticket(ticket_id)
+    if not ticket:
+        raise SystemExit(f"Ticket {ticket_id} not found.")
+    print(f"Id: {ticket.ticket_id}")
+    print(f"Subject: {ticket.subject}")
+    print(f"Status: {ticket.status or 'unknown'}")
+    if ticket.assignee:
+        print(f"Assignee: {ticket.assignee}")
+    if ticket.tags:
+        print(f"Tags: {', '.join(ticket.tags)}")
+    print(f"Created: {ticket.created_at}")
+    print(f"Updated: {ticket.updated_at}")
+    if ticket.body:
+        print("")
+        print(ticket.body)
+    return 0
+
+
 def _open_editor(path: Path) -> None:
     editor = os.environ.get("EDITOR") or "vi"
     command = shlex.split(editor) + [str(path)]
@@ -183,6 +202,12 @@ def main() -> int:
         ticket = backend.edit_ticket(args.subject[0])
         print(f"Updated {ticket.ticket_id}: {ticket.subject}")
         return 0
+    if verb == "show":
+        if not args.subject:
+            raise SystemExit("Ticket id is required for show.")
+        if len(args.subject) != 1:
+            raise SystemExit("Ticket id is required for show.")
+        return _handle_show(backend, args.subject[0])
     if verb == "mcp":
         from tkts.mcp_server import run_mcp_server
 
