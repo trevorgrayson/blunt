@@ -138,6 +138,53 @@ class Confluent:
         return [row
                 for row in data["data"]]
 
+
+    def received_records(self, granularity="PT1M", limit=100):
+
+        query = {
+            "aggregations": [
+                {"metric": "io.confluent.kafka.server/received_records"}
+                # io.confluent.kafka.server/received_records
+                # io.confluent.kafka.server/request_count
+                # io.confluent.kafka.server/successful_authentication_count
+            ],
+            "filter": {
+                "field": "resource.kafka.id",
+                "op": "EQ",
+                "value": self.filter
+            },
+            "intervals": [
+                "PT1H/now"
+            ],
+            "granularity": "PT1M",
+            "limit": limit
+        }
+        data = self.request(query)
+        return [row for row in data["data"]]
+
+    def request_count(self, granularity="PT1M", limit=100):
+
+        query = {
+            "aggregations": [
+                {"metric": "io.confluent.kafka.server/request_count"}
+                # io.confluent.kafka.server/received_records
+                # io.confluent.kafka.server/request_count
+                # io.confluent.kafka.server/successful_authentication_count
+            ],
+            "filter": {
+                "field": "resource.kafka.id",
+                "op": "EQ",
+                "value": self.filter
+            },
+            "intervals": [
+                "PT1H/now"
+            ],
+            "granularity": "PT1M",
+            "limit": limit
+        }
+        data = self.request(query)
+        return [row for row in data["data"]]
+
     def received_bytes(self, granularity="PT1M", limit=100):
         query = {
           "aggregations": [{"metric": "io.confluent.kafka.server/received_bytes"}],

@@ -8,14 +8,19 @@ args = parser.parse_args()
 client = Confluent()
 results = client.received_bytes()
 
-
+print(results)
 n = range(0, len(results))
 # 1hr => seconds
 values = [bytes_to_mb(result.value/(60)) for result in results]
 
 if args.format == 'statsd':
     print(f"bytes_received:{sum(values[-10:])}|g")
-    # print(client.cluster_load())
+
+    # io.confluent.kafka.server/received_records
+    # io.confluent.kafka.server/request_count
+    # io.confluent.kafka.server/successful_authentication_count
+    print(client.request_count()[-1])
+    print(client.received_records()[-1])
     # print(client.query(Metrics.ClusterLoadPercent, group_by="resource.kafka.name", granularity="PT1M", limit=1))
     # print(client.query(Metrics.ConsumerLag, group_by="resource.kafka.name", granularity="PT1M", limit=1))
 
