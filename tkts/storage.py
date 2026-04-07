@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import shlex
+import subprocess
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -14,6 +16,33 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _find_config_path(start: Path) -> Optional[Path]:
+    resolved = start.resolve()
+    for candidate_root in (resolved, *resolved.parents):
+        candidate = candidate_root / ".tkts" / "config"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _read_root_from_config(path: Path) -> Optional[str]:
+    try:
+        contents = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    for line in contents.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if "=" in stripped:
+            key, value = stripped.split("=", 1)
+            if key.strip().lower() in {"root", "tkts_root"}:
+                return value.strip()
+            continue
+        return stripped
+    return None
+
+
 @dataclass
 class TicketStore:
     root: Path
@@ -23,6 +52,11 @@ class TicketStore:
         root = os.environ.get("TKTS_ROOT")
         if root:
             return cls(Path(root).expanduser())
+        config_path = _find_config_path(Path.cwd())
+        if config_path:
+            config_root = _read_root_from_config(config_path)
+            if config_root:
+                return cls(Path(config_root).expanduser())
         return cls(Path.home() / ".tkts")
 
     def ensure(self) -> None:
@@ -80,5 +114,20 @@ class TicketStore:
             created_at=now,
             updated_at=now,
         )
+        self.save_ticket(ticket)
+        return ticket
+
+    def edit_ticket(self, ticket_id: str) -> Ticket:
+        path = self._ticket_path(ticket_id)
+        if not path.exists():
+            raise FileNotFoundError(f"Ticket {ticket_id} not found.")
+
+        editor = os.environ.get("EDITOR") or "vi"
+        command = shlex.split(editor) + [str(path)]
+        subprocess.run(command, check=False)
+
+        raw = path.read_text(encoding="utf-8")
+        ticket = Ticket.from_string(raw, fallback_id=ticket_id)
+        ticket.updated_at = _utc_now_iso()
         self.save_ticket(ticket)
         return ticket

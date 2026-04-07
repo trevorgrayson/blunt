@@ -9,7 +9,6 @@ The module is located in this directory, should be installable via pyconfig.toml
 requirements
 - Provide a Python API and an embedded MCP interface for ticket access.
 - Support pluggable backends (e.g., Jira, Trello) with a default on-disk engine.
-- CLI accepts verbs; if the first argument is not a verb, treat the phrase as a todo and add it to the intake list.
 - Default CLI verb is `todo` (alias `list`), which lists current tickets.
 - `new` creates a ticket with the remainder of the command as the Subject.
 - `edit` allows interactive editing of a ticket (default storage engine may shell out to `$EDITOR`).
@@ -20,3 +19,6 @@ requirements
 done
 - implemented local file storage and retrieval with tags plus basic `tkts list` and `tkts new` CLI support
 - documented README requirements in PRD
+- added `tkts edit` to open tickets in $EDITOR and persist updated timestamps
+- handled multi-word todo intake when the first argument is not a verb
+- added `.tkts/config` discovery to configure storage root (supports `root=` or `TKTS_ROOT=` values)
