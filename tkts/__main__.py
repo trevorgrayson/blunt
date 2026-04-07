@@ -65,9 +65,9 @@ def _render_list(backend: Backend) -> int:
         print("No tickets found.")
         return 0
     for ticket in tickets:
-        tag_text = f" [{', '.join(ticket.tags)}]" if ticket.tags else ""
-        assignee_text = f" ({ticket.assignee})" if ticket.assignee else ""
-        print(f"{ticket.ticket_id}: {ticket.subject}{assignee_text}{tag_text}")
+        status = ticket.status or "unknown"
+        short_id = ticket.ticket_id[:5]
+        print(f"{short_id} [{status}] {ticket.subject}")
     return 0
 
 
