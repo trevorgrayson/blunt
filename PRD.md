@@ -17,3 +17,6 @@ requirements
 - pyproject.toml for cli
 - `tkts mcp` launches a mcp server using https://github.com/modelcontextprotocol/python-sdk
 - ensure the readme is kept up to date. include getting
+  - 2025-09-19: Added a Getting Started section to tkts/README.md with install + basic CLI usage.
+  - 2025-09-19: Added multi-document support in ticket parsing/serialization using text/plain MIME parts.
+  - 2026-04-07: Added model round-trip tests and fixed multi-document attachment handling.
