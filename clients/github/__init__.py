@@ -82,6 +82,8 @@ class GithubPRClient:
         issue_comments = self._fetch_issue_comments(pr)
         review_comments = self._fetch_review_comments(pr)
         action_items = self._build_action_items(pr, reviews, issue_comments, review_comments)
+        open_comments = self._collect_open_comments(issue_comments, review_comments)
+        checks = self._get_pr_checks(pr)
 
         return {
             "title": pr["title"],
@@ -90,6 +92,9 @@ class GithubPRClient:
             "url": pr["html_url"],
             "review_status": get_review_status(reviews),
             "action_items": action_items,
+            "open_comments": open_comments,
+            "open_comment_count": len(open_comments),
+            "checks": checks,
         }
 
     def _fetch_issue_comments(self, pr):
@@ -163,6 +168,58 @@ class GithubPRClient:
             action_items.append("No action items detected.")
 
         return action_items
+
+    def _collect_open_comments(self, issue_comments, review_comments):
+        open_comments = []
+
+        for comment in issue_comments:
+            commenter = (comment.get("user") or {}).get("login")
+            if not commenter or commenter == self.username:
+                continue
+            body = self._snippet(comment.get("body", ""))
+            if body:
+                open_comments.append(f"{commenter}: {body}")
+            else:
+                open_comments.append(f"{commenter}")
+
+        for comment in review_comments:
+            commenter = (comment.get("user") or {}).get("login")
+            if not commenter or commenter == self.username:
+                continue
+            path = comment.get("path")
+            line = comment.get("line") or comment.get("position")
+            location = f" on {path}:{line}" if path and line else ""
+            body = self._snippet(comment.get("body", ""))
+            if body:
+                open_comments.append(f"{commenter}{location}: {body}")
+            else:
+                open_comments.append(f"{commenter}{location}")
+
+        return open_comments
+
+    def _get_pr_checks(self, pr):
+        head = pr.get("head") or {}
+        repo = (pr.get("base") or {}).get("repo") or {}
+        repo_full_name = repo.get("full_name")
+        sha = head.get("sha")
+        if not repo_full_name or not sha:
+            return {"state": "unknown", "total": 0, "counts": {}}
+
+        url = f"{API_URL}/repos/{repo_full_name}/commits/{sha}/status"
+        resp = requests.get(url, headers=self._headers())
+        resp.raise_for_status()
+        data = resp.json()
+
+        counts = {}
+        for status in data.get("statuses", []):
+            state = status.get("state", "unknown")
+            counts[state] = counts.get(state, 0) + 1
+
+        return {
+            "state": data.get("state", "unknown"),
+            "total": data.get("total_count", len(data.get("statuses", []))),
+            "counts": counts,
+        }
 
     def load_prs(self):
         def pr_init(pr):
