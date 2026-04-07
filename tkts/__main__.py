@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
+import tempfile
 from typing import List, Optional, Sequence
 
 from tkts.backends import Backend, get_backend_from_env
@@ -28,6 +29,13 @@ def _parse_args() -> ArgumentParser:
         "--body",
         default=None,
         help="Optional body for new tickets.",
+    )
+    parser.add_argument(
+        "--desc",
+        "--description",
+        dest="desc",
+        action="store_true",
+        help="Open the editor to capture the ticket description/body.",
     )
     parser.add_argument(
         "--assignee",
@@ -196,6 +204,18 @@ def _open_editor(path: Path) -> None:
     subprocess.run(command, check=False)
 
 
+def _capture_description(initial_body: Optional[str]) -> str:
+    with tempfile.NamedTemporaryFile("w+", encoding="utf-8", delete=False) as handle:
+        path = Path(handle.name)
+        if initial_body:
+            handle.write(initial_body)
+            handle.flush()
+    _open_editor(path)
+    body = path.read_text(encoding="utf-8")
+    path.unlink(missing_ok=True)
+    return body
+
+
 def _confirm(prompt: str) -> bool:
     response = input(prompt).strip().lower()
     return response in {"y", "yes"}
@@ -251,10 +271,11 @@ def main() -> int:
     if verb in {"list", "todo"}:
         return _render_list(backend)
     if verb == "new":
+        body = _capture_description(args.body) if args.desc else args.body
         return _handle_new(
             backend,
             args.subject,
-            args.body,
+            body,
             args.assignee,
             _parse_tags(args.tags),
             args.status,
@@ -330,10 +351,11 @@ def main() -> int:
         subject_parts = [verb]
         if args.subject:
             subject_parts.extend(args.subject)
+        body = _capture_description(args.body) if args.desc else args.body
         return _handle_new(
             backend,
             subject_parts,
-            args.body,
+            body,
             args.assignee,
             _parse_tags(args.tags),
             args.status,

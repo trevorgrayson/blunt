@@ -65,7 +65,19 @@ class Ticket:
 
         extra_headers: Dict[str, str] = {}
         for key, value in message.items():
-            if key in {"Id", "Ticket-Id", "Subject", "Assignee", "Tags", "Status", "Created", "Updated"}:
+            if key in {
+                "Id",
+                "Ticket-Id",
+                "Subject",
+                "Assignee",
+                "Tags",
+                "Status",
+                "Created",
+                "Updated",
+                "Content-Type",
+                "Content-Transfer-Encoding",
+                "MIME-Version",
+            }:
                 continue
             extra_headers[key] = value
 

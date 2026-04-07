@@ -21,3 +21,4 @@
 - Updated tkts list output to show short id and status in '{id} [status] Subject' format; tests: pytest; type check: mypy not installed.
 - Added ticket id prefix resolution, CLI show verb, and tests for prefix handling; tests: pytest; type check: mypy not installed.
 - Added CLI done verb to mark tickets complete and documented it; tests: pytest; type check: mypy not installed.
+- Added --desc/--description option for tkts new to open editor for ticket body; tests: pytest; type check: mypy not installed.
