@@ -28,7 +28,9 @@ The first argument will be tested as a tkts "verb" and be used choose the action
 `todo` (or `list`) is the default verb. It will return your present list of tickets even if no verb is provided.
 `new` will take the remainder of the text and create a tkt with that Subject.
 `edit` will allow interactive editing of the tkt. For the default storage engine, this may shell out to $EDITOR.
+`plan` will open a PRD file for refinement until actionable, with `--exec` to walk tasks.
 `mcp` launches an MCP server for Agents to interact with. the `--read-only` option will prevent writes.
+
 
 ## Engines
 
@@ -37,3 +39,9 @@ The first argument will be tested as a tkts "verb" and be used choose the action
 The default `tkts` engine is a file-based storage system. It defaults to a root of `$HOME/.tkts`, but can be configured by in-directory `.tkts/config` files or the `TKTS_ROOT` environment variable.
 
 Ticket files are stored in a format that is parsable as the Internet Message Format. It can define `Subject`, `Assignee`, and other fields as headers (like in RFC 5322). The body can be used to detail the ticket, including support of multiple documents.
+
+## Updates
+
+- 2025-09-19: Added a Getting Started section with install + basic CLI usage.
+- 2025-09-19: Added multi-document support in ticket parsing/serialization using text/plain MIME parts.
+- 2026-04-07: Added model round-trip tests and fixed multi-document attachment handling.
