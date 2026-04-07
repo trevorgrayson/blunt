@@ -15,12 +15,8 @@ requirements
 - `edit` allows interactive editing of a ticket (default storage engine may shell out to `$EDITOR`).
 - Default storage engine root is `$HOME/.tkts`, configurable via `.tkts/config` or `TKTS_ROOT`.
 - Ticket files use Internet Message Format-like headers (e.g., `Subject`, `Assignee`) with a body for details, supporting multiple documents.
-
-prioritize
-- local file format storage and retrieval, with tagging
-- tkts list
-- tkts -- new ticket functionality
-
+- pyproject.toml for cli
+- tkts mcp launches a mcp server using https://github.com/modelcontextprotocol/python-sdk
 done
 - implemented local file storage and retrieval with tags plus basic `tkts list` and `tkts new` CLI support
 - documented README requirements in PRD
