@@ -22,3 +22,5 @@
 - Added ticket id prefix resolution, CLI show verb, and tests for prefix handling; tests: pytest; type check: mypy not installed.
 - Added CLI done verb to mark tickets complete and documented it; tests: pytest; type check: mypy not installed.
 - Added --desc/--description option for tkts new to open editor for ticket body; tests: pytest; type check: mypy not installed.
+- Sorted CLI list output by status order and added list ordering test; tests: pytest; type check: mypy not installed.
+- Added MCP resources for list/get tickets with tests for resource handlers and read-only tool listing; tests: pytest; type check: mypy not installed.

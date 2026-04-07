@@ -5,10 +5,23 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
+import sys
 import tempfile
 from typing import List, Optional, Sequence
 
 from tkts.backends import Backend, get_backend_from_env
+
+
+_STATUS_ORDER = ["todo", "in-progress", "in-review", "blocked", "done"]
+_STATUS_RANK = {status: idx for idx, status in enumerate(_STATUS_ORDER)}
+_EXEC_PROMPT = (
+    "@PRD.md @progress.txt \\\n"
+    "  1. Follow @AGENTS.md\n"
+    "  2. Find the highest-priority task and implement it. \\\n"
+    "  3. Run your tests and type checks.\n"
+    "  4. update with your progress.\n"
+    "  5. Commit your changes."
+)
 
 
 def _parse_args() -> ArgumentParser:
@@ -17,7 +30,7 @@ def _parse_args() -> ArgumentParser:
         "verb",
         nargs="?",
         default="todo",
-        help="Action to perform: list/todo (default), new, edit, update, done, show, tail, plan, or mcp.",
+        help="Action to perform: list/todo (default), new, edit, update, done, show, tail, plan, exec, or mcp.",
     )
     parser.add_argument(
         "subject",
@@ -98,6 +111,14 @@ def _render_list(backend: Backend) -> int:
     if not tickets:
         print("No tickets found.")
         return 0
+    tickets = sorted(
+        tickets,
+        key=lambda ticket: (
+            _STATUS_RANK.get(ticket.status or "unknown", len(_STATUS_RANK)),
+            (ticket.subject or "").lower(),
+            ticket.ticket_id,
+        ),
+    )
     for ticket in tickets:
         status = ticket.status or "unknown"
         short_id = ticket.ticket_id[:5]
@@ -262,9 +283,26 @@ def _handle_plan(filename: str, exec_plan: bool) -> int:
     return 0
 
 
-def main() -> int:
+def _handle_exec(agent_args: Optional[Sequence[str]]) -> int:
+    if agent_args:
+        command = list(agent_args)
+    else:
+        command = ["codex", "exec", "--sandbox", "workspace-write"]
+    command.append(_EXEC_PROMPT)
+    result = subprocess.run(command, check=False)
+    return result.returncode
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = _parse_args()
-    args = parser.parse_args()
+    raw_args = list(argv) if argv is not None else sys.argv[1:]
+    args, unknown = parser.parse_known_args(raw_args)
+    if args.verb == "exec" and unknown:
+        args.subject = list(args.subject or [])
+        args.subject.extend(unknown)
+        unknown = []
+    if unknown:
+        parser.error(f"unrecognized arguments: {' '.join(unknown)}")
     backend = get_backend_from_env()
 
     verb = args.verb or "list"
@@ -346,6 +384,8 @@ def main() -> int:
         if len(args.subject) != 1:
             raise SystemExit("Only one filename is supported for plan.")
         return _handle_plan(args.subject[0], args.exec_plan)
+    if verb == "exec":
+        return _handle_exec(args.subject)
 
     if verb:
         subject_parts = [verb]

@@ -34,7 +34,10 @@ Use `--status` to attach a status header (e.g., `tkts new "Fix CI flake" --statu
 `show` prints a ticket by id (prefixes are accepted if unambiguous).
 `tail` prints recent change log entries for a ticket.
 `plan` will open a PRD file for refinement until actionable, with `--exec` to walk tasks.
+`exec` runs the agent command with the standard PRD prompt (defaults to `codex exec --sandbox workspace-write`).
 `mcp` launches an MCP server for Agents to interact with. the `--read-only` option will prevent writes.
+
+Example: `tkts exec` (or `tkts exec other-agent --flag`).
 
 
 ## Engines
