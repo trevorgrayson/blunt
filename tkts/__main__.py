@@ -16,7 +16,7 @@ def _parse_args() -> ArgumentParser:
         "verb",
         nargs="?",
         default="todo",
-        help="Action to perform: list/todo (default), new, edit, update, show, tail, plan, or mcp.",
+        help="Action to perform: list/todo (default), new, edit, update, done, show, tail, plan, or mcp.",
     )
     parser.add_argument(
         "subject",
@@ -281,6 +281,24 @@ def main() -> int:
             args.assignee,
             tags,
             args.status,
+            args.append_body,
+            args.comment,
+            args.log_message,
+        )
+    if verb == "done":
+        if not args.subject:
+            raise SystemExit("Ticket id is required for done.")
+        if len(args.subject) != 1:
+            raise SystemExit("Ticket id is required for done.")
+        tags = _parse_tags(args.tags) if args.tags is not None else None
+        return _handle_update(
+            backend,
+            args.subject[0],
+            args.set_subject,
+            args.body,
+            args.assignee,
+            tags,
+            "done",
             args.append_body,
             args.comment,
             args.log_message,
