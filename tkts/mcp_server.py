@@ -10,14 +10,17 @@ def _require_mcp() -> Any:
     try:
         import mcp  # type: ignore
         from mcp.server import Server  # type: ignore
+        from mcp.server.lowlevel.helper_types import (  # type: ignore
+            ReadResourceContents,
+        )
         from mcp.server.stdio import stdio_server  # type: ignore
-        from mcp.types import TextContent, Tool  # type: ignore
+        from mcp.types import Resource, TextContent, Tool  # type: ignore
     except ModuleNotFoundError as exc:  # pragma: no cover - import guard
         raise SystemExit(
             "The mcp Python SDK is required. Install `mcp` to use `tkts mcp`."
         ) from exc
 
-    return mcp, Server, stdio_server, TextContent, Tool
+    return mcp, Server, stdio_server, TextContent, Tool, Resource, ReadResourceContents
 
 
 def _ticket_to_dict(ticket: Any) -> Dict[str, Any]:
@@ -27,20 +30,21 @@ def _ticket_to_dict(ticket: Any) -> Dict[str, Any]:
         "body": ticket.body,
         "assignee": ticket.assignee,
         "tags": ticket.tags,
+        "status": getattr(ticket, "status", None),
         "created_at": ticket.created_at,
         "updated_at": ticket.updated_at,
     }
 
 
-def run_mcp_server() -> int:
-    _, Server, stdio_server, TextContent, Tool = _require_mcp()
+def run_mcp_server(read_only: bool = False) -> int:
+    _, Server, stdio_server, TextContent, Tool, Resource, ReadResourceContents = _require_mcp()
 
     backend: Backend = get_backend_from_env()
     server = Server("tkts")
 
     @server.list_tools()
     async def list_tools() -> List[Tool]:
-        return [
+        tools = [
             Tool(
                 name="list_tickets",
                 description="List all tickets.",
@@ -55,21 +59,77 @@ def run_mcp_server() -> int:
                     "required": ["ticket_id"],
                 },
             ),
-            Tool(
-                name="create_ticket",
-                description="Create a new ticket.",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "subject": {"type": "string"},
-                        "body": {"type": "string"},
-                        "assignee": {"type": "string"},
-                        "tags": {"type": "array", "items": {"type": "string"}},
-                    },
-                    "required": ["subject"],
-                },
-            ),
         ]
+        if not read_only:
+            tools.append(
+                Tool(
+                    name="create_ticket",
+                    description="Create a new ticket.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "subject": {"type": "string"},
+                            "body": {"type": "string"},
+                            "assignee": {"type": "string"},
+                            "tags": {"type": "array", "items": {"type": "string"}},
+                            "status": {"type": "string"},
+                        },
+                        "required": ["subject"],
+                    },
+                )
+            )
+        return tools
+
+    @server.list_resources()
+    async def list_resources() -> List[Resource]:
+        tickets = backend.list_tickets()
+        resources: List[Resource] = [
+            Resource(
+                name="tickets",
+                title="Tickets",
+                uri="tkts://tickets",
+                description="List all tickets.",
+                mimeType="application/json",
+            )
+        ]
+        for ticket in tickets:
+            resources.append(
+                Resource(
+                    name=f"ticket-{ticket.ticket_id}",
+                    title=ticket.subject or f"Ticket {ticket.ticket_id}",
+                    uri=f"tkts://tickets/{ticket.ticket_id}",
+                    description="Single ticket.",
+                    mimeType="application/json",
+                )
+            )
+        return resources
+
+    @server.read_resource()
+    async def read_resource(uri: Any) -> List[ReadResourceContents]:
+        uri_str = str(uri)
+        if uri_str == "tkts://tickets":
+            tickets = [_ticket_to_dict(ticket) for ticket in backend.list_tickets()]
+            return [
+                ReadResourceContents(
+                    content=json.dumps(tickets, ensure_ascii=True),
+                    mime_type="application/json",
+                )
+            ]
+        prefix = "tkts://tickets/"
+        if uri_str.startswith(prefix):
+            ticket_id = uri_str[len(prefix) :]
+            if not ticket_id:
+                raise ValueError("ticket_id is required")
+            ticket = backend.get_ticket(str(ticket_id))
+            if not ticket:
+                raise ValueError(f"Ticket {ticket_id} not found")
+            return [
+                ReadResourceContents(
+                    content=json.dumps(_ticket_to_dict(ticket), ensure_ascii=True),
+                    mime_type="application/json",
+                )
+            ]
+        raise ValueError(f"Unknown resource: {uri_str}")
 
     @server.call_tool()
     async def call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> List[TextContent]:
@@ -86,17 +146,21 @@ def run_mcp_server() -> int:
                 raise ValueError(f"Ticket {ticket_id} not found")
             return [TextContent(type="text", text=json.dumps(_ticket_to_dict(ticket), ensure_ascii=True))]
         if name == "create_ticket":
+            if read_only:
+                raise ValueError("create_ticket is disabled in read-only mode")
             subject = arguments.get("subject")
             if not subject:
                 raise ValueError("subject is required")
             body = str(arguments.get("body") or "")
             assignee = arguments.get("assignee")
             tags = arguments.get("tags")
+            status = arguments.get("status")
             ticket = backend.create_ticket(
                 subject=str(subject),
                 body=body,
                 assignee=str(assignee) if assignee else None,
                 tags=tags if isinstance(tags, list) else None,
+                status=str(status) if status else None,
             )
             return [TextContent(type="text", text=json.dumps(_ticket_to_dict(ticket), ensure_ascii=True))]
 

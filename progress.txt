@@ -14,3 +14,7 @@
 - Added tkts plan CLI flow with editor loop and optional task execution prompt; tests: pytest, mypy (not installed).
 - Added README Updates section with required dated entries; tests: pytest; type check: mypy not installed.
 - Documented the plan CLI verb in help/README; tests: pytest, mypy (not installed).
+
+- Set default CLI verb to todo to match PRD; tests: pytest, mypy (not installed).
+
+- Added --read-only support for tkts mcp (hides create_ticket, blocks writes in read-only); tests: pytest; type check: mypy not installed.
