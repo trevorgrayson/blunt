@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from tkts.storage import TicketStore
 
@@ -12,11 +12,11 @@ def _parse_args() -> ArgumentParser:
         "verb",
         nargs="?",
         default="list",
-        help="Action to perform: list (default) or new.",
+        help="Action to perform: list (default), new, or edit.",
     )
     parser.add_argument(
         "subject",
-        nargs="?",
+        nargs="*",
         default=None,
         help="Ticket subject for `new`.",
     )
@@ -54,13 +54,23 @@ def _parse_tags(raw: str) -> List[str]:
     return [tag.strip() for tag in raw.split(",") if tag.strip()]
 
 
+def _normalize_subject(subject_parts: Optional[Sequence[str]]) -> Optional[str]:
+    if not subject_parts:
+        return None
+    if isinstance(subject_parts, str):
+        return subject_parts
+    subject = " ".join(part.strip() for part in subject_parts if part.strip())
+    return subject or None
+
+
 def _handle_new(
     store: TicketStore,
-    subject: Optional[str],
+    subject_parts: Optional[Sequence[str] | str],
     body: str,
     assignee: Optional[str],
     tags: List[str],
 ) -> int:
+    subject = _normalize_subject(subject_parts)
     if not subject:
         raise SystemExit("Subject is required for new tickets.")
     ticket = store.create_ticket(subject=subject, body=body, assignee=assignee, tags=tags)
@@ -78,9 +88,20 @@ def main() -> int:
         return _render_list(store)
     if verb == "new":
         return _handle_new(store, args.subject, args.body, args.assignee, _parse_tags(args.tags))
+    if verb == "edit":
+        if not args.subject:
+            raise SystemExit("Ticket id is required for edit.")
+        if len(args.subject) != 1:
+            raise SystemExit("Ticket id is required for edit.")
+        ticket = store.edit_ticket(args.subject[0])
+        print(f"Updated {ticket.ticket_id}: {ticket.subject}")
+        return 0
 
-    if verb and args.subject is None:
-        return _handle_new(store, verb, args.body, args.assignee, _parse_tags(args.tags))
+    if verb:
+        subject_parts = [verb]
+        if args.subject:
+            subject_parts.extend(args.subject)
+        return _handle_new(store, subject_parts, args.body, args.assignee, _parse_tags(args.tags))
 
     raise SystemExit(f"Unknown verb: {verb}")
 

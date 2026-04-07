@@ -1,2 +1,5 @@
 - Implemented tkts local file storage + CLI list/new; tests: pytest (no tests), mypy missing.
 - Documented tkts README requirements in PRD; tests: pytest (no tests), mypy missing.
+- Added tkts edit command to open tickets in $EDITOR and persist updated timestamps; tests: pytest (no tests), mypy missing.
+- Added multi-word todo intake when first CLI arg is not a verb; tests: pytest (no tests), mypy missing.
+- Added .tkts/config discovery for storage root (supports root= or TKTS_ROOT=); tests: pytest (no tests), mypy missing.
