@@ -39,6 +39,7 @@ class Ticket:
     body: str
     assignee: Optional[str] = None
     tags: List[str] = field(default_factory=list)
+    status: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     documents: List[str] = field(default_factory=list)
@@ -57,13 +58,14 @@ class Ticket:
 
         assignee = message.get("Assignee")
         tags = _split_tags(message.get("Tags", ""))
+        status = message.get("Status")
 
         created_at = message.get("Created")
         updated_at = message.get("Updated")
 
         extra_headers: Dict[str, str] = {}
         for key, value in message.items():
-            if key in {"Id", "Ticket-Id", "Subject", "Assignee", "Tags", "Created", "Updated"}:
+            if key in {"Id", "Ticket-Id", "Subject", "Assignee", "Tags", "Status", "Created", "Updated"}:
                 continue
             extra_headers[key] = value
 
@@ -73,6 +75,7 @@ class Ticket:
             body=body_text,
             assignee=assignee,
             tags=tags,
+            status=status,
             created_at=created_at,
             updated_at=updated_at,
             documents=documents,
@@ -87,6 +90,8 @@ class Ticket:
             message["Assignee"] = self.assignee
         if self.tags:
             message["Tags"] = _join_tags(self.tags)
+        if self.status:
+            message["Status"] = self.status
         if self.created_at:
             message["Created"] = self.created_at
         if self.updated_at:

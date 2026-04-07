@@ -27,7 +27,8 @@ def create_ticket(
     body: str = "",
     assignee: Optional[str] = None,
     tags: Optional[Iterable[str]] = None,
+    status: Optional[str] = None,
     store: Optional[Backend] = None,
 ) -> Ticket:
     store = store or get_store()
-    return store.create_ticket(subject=subject, body=body, assignee=assignee, tags=tags)
+    return store.create_ticket(subject=subject, body=body, assignee=assignee, tags=tags, status=status)

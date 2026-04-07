@@ -118,6 +118,7 @@ class TicketStore:
         body: str = "",
         assignee: Optional[str] = None,
         tags: Optional[Iterable[str]] = None,
+        status: Optional[str] = None,
     ) -> Ticket:
         ticket_id = uuid.uuid4().hex
         now = _utc_now_iso()
@@ -127,6 +128,7 @@ class TicketStore:
             body=body,
             assignee=assignee,
             tags=list(tags or []),
+            status=status,
             created_at=now,
             updated_at=now,
         )

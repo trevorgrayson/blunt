@@ -15,7 +15,7 @@ def _parse_args() -> ArgumentParser:
     parser.add_argument(
         "verb",
         nargs="?",
-        default="list",
+        default="todo",
         help="Action to perform: list/todo (default), new, edit, plan, or mcp.",
     )
     parser.add_argument(
@@ -40,10 +40,21 @@ def _parse_args() -> ArgumentParser:
         help="Comma-separated list of tags.",
     )
     parser.add_argument(
+        "--status",
+        default=None,
+        help="Optional status for new tickets (e.g., blocked, done).",
+    )
+    parser.add_argument(
         "--exec",
         dest="exec_plan",
         action="store_true",
         help="Execute a PRD by breaking it into tasks and stepping through them.",
+    )
+    parser.add_argument(
+        "--read-only",
+        dest="read_only",
+        action="store_true",
+        help="Run MCP server in read-only mode (no writes).",
     )
     return parser
 
@@ -79,11 +90,18 @@ def _handle_new(
     body: str,
     assignee: Optional[str],
     tags: List[str],
+    status: Optional[str],
 ) -> int:
     subject = _normalize_subject(subject_parts)
     if not subject:
         raise SystemExit("Subject is required for new tickets.")
-    ticket = backend.create_ticket(subject=subject, body=body, assignee=assignee, tags=tags)
+    ticket = backend.create_ticket(
+        subject=subject,
+        body=body,
+        assignee=assignee,
+        tags=tags,
+        status=status,
+    )
     print(f"Created {ticket.ticket_id}: {ticket.subject}")
     return 0
 
@@ -149,7 +167,14 @@ def main() -> int:
     if verb in {"list", "todo"}:
         return _render_list(backend)
     if verb == "new":
-        return _handle_new(backend, args.subject, args.body, args.assignee, _parse_tags(args.tags))
+        return _handle_new(
+            backend,
+            args.subject,
+            args.body,
+            args.assignee,
+            _parse_tags(args.tags),
+            args.status,
+        )
     if verb == "edit":
         if not args.subject:
             raise SystemExit("Ticket id is required for edit.")
@@ -161,7 +186,7 @@ def main() -> int:
     if verb == "mcp":
         from tkts.mcp_server import run_mcp_server
 
-        return run_mcp_server()
+        return run_mcp_server(read_only=args.read_only)
     if verb == "plan":
         if not args.subject:
             raise SystemExit("Filename is required for plan.")
@@ -173,7 +198,14 @@ def main() -> int:
         subject_parts = [verb]
         if args.subject:
             subject_parts.extend(args.subject)
-        return _handle_new(backend, subject_parts, args.body, args.assignee, _parse_tags(args.tags))
+        return _handle_new(
+            backend,
+            subject_parts,
+            args.body,
+            args.assignee,
+            _parse_tags(args.tags),
+            args.status,
+        )
 
     raise SystemExit(f"Unknown verb: {verb}")
 

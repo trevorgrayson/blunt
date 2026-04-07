@@ -21,6 +21,7 @@ class Backend(Protocol):
         body: str = "",
         assignee: Optional[str] = None,
         tags: Optional[List[str]] = None,
+        status: Optional[str] = None,
     ) -> Ticket:
         ...
 
