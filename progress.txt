@@ -1,0 +1,26 @@
+- Implemented tkts local file storage + CLI list/new; tests: pytest (no tests), mypy missing.
+- Documented tkts README requirements in PRD; tests: pytest (no tests), mypy missing.
+- Added tkts edit command to open tickets in $EDITOR and persist updated timestamps; tests: pytest (no tests), mypy missing.
+- Added multi-word todo intake when first CLI arg is not a verb; tests: pytest (no tests), mypy missing.
+- Added .tkts/config discovery for storage root (supports root= or TKTS_ROOT=); tests: pytest (no tests), mypy missing.
+- Added pyproject.toml for tkts CLI entry point; tests: pytest (pending), mypy (pending).
+- Tests: pytest (no tests collected, exit 5); type check: mypy not installed.
+- Added Python API helpers and `tkts mcp` server entrypoint; tests: pytest (no tests collected, exit 5), mypy (not installed).
+- Added backend registry with TKTS_BACKEND/backend config selection and wired CLI/API/MCP to use it; tests: pytest (no tests collected, exit 5), mypy (not installed).
+- Added Getting Started section to tkts/README.md with install and basic CLI usage; tests: pytest (no tests collected, exit 5), mypy (not installed).
+- Added multi-document support for tickets via MIME text/plain parts; tests: pytest (no tests collected, exit 5), mypy (not installed).
+- Added ticket model round-trip tests and fixed multi-document attachment handling; tests: pytest, mypy (not installed).
+
+- Added tkts plan CLI flow with editor loop and optional task execution prompt; tests: pytest, mypy (not installed).
+- Added README Updates section with required dated entries; tests: pytest; type check: mypy not installed.
+- Documented the plan CLI verb in help/README; tests: pytest, mypy (not installed).
+
+- Set default CLI verb to todo to match PRD; tests: pytest, mypy (not installed).
+
+- Added --read-only support for tkts mcp (hides create_ticket, blocks writes in read-only); tests: pytest; type check: mypy not installed.
+- Updated tkts list output to show short id and status in '{id} [status] Subject' format; tests: pytest; type check: mypy not installed.
+- Added ticket id prefix resolution, CLI show verb, and tests for prefix handling; tests: pytest; type check: mypy not installed.
+- Added CLI done verb to mark tickets complete and documented it; tests: pytest; type check: mypy not installed.
+- Added --desc/--description option for tkts new to open editor for ticket body; tests: pytest; type check: mypy not installed.
+- Sorted CLI list output by status order and added list ordering test; tests: pytest; type check: mypy not installed.
+- Added MCP resources for list/get tickets with tests for resource handlers and read-only tool listing; tests: pytest; type check: mypy not installed.
