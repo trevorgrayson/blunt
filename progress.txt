@@ -1,0 +1,2 @@
+- Implemented tkts local file storage + CLI list/new; tests: pytest (no tests), mypy missing.
+- Documented tkts README requirements in PRD; tests: pytest (no tests), mypy missing.
