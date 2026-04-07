@@ -12,6 +12,21 @@ from typing import Iterable, List, Optional
 from tkts.models import Ticket
 
 
+_ALLOWED_STATUSES = {"todo", "in-progress", "in-review", "blocked", "done"}
+
+
+def _normalize_status(status: Optional[str]) -> Optional[str]:
+    if status is None:
+        return None
+    normalized = status.strip().lower()
+    if not normalized:
+        return None
+    if normalized not in _ALLOWED_STATUSES:
+        allowed = ", ".join(sorted(_ALLOWED_STATUSES))
+        raise ValueError(f"Unknown status '{status}'. Allowed values: {allowed}.")
+    return normalized
+
+
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -122,13 +137,14 @@ class TicketStore:
     ) -> Ticket:
         ticket_id = uuid.uuid4().hex
         now = _utc_now_iso()
+        normalized_status = _normalize_status(status)
         ticket = Ticket(
             ticket_id=ticket_id,
             subject=subject,
             body=body,
             assignee=assignee,
             tags=list(tags or []),
-            status=status,
+            status=normalized_status,
             created_at=now,
             updated_at=now,
         )
