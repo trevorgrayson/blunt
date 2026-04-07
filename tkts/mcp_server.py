@@ -36,10 +36,16 @@ def _ticket_to_dict(ticket: Any) -> Dict[str, Any]:
     }
 
 
-def run_mcp_server(read_only: bool = False) -> int:
-    _, Server, stdio_server, TextContent, Tool, Resource, ReadResourceContents = _require_mcp()
-
-    backend: Backend = get_backend_from_env()
+def _build_server(
+    *,
+    backend: Backend,
+    read_only: bool,
+    Server: Any,
+    TextContent: Any,
+    Tool: Any,
+    Resource: Any,
+    ReadResourceContents: Any,
+) -> Any:
     server = Server("tkts")
 
     @server.list_tools()
@@ -230,6 +236,23 @@ def run_mcp_server(read_only: bool = False) -> int:
             return [TextContent(type="text", text=json.dumps(entries, ensure_ascii=True))]
 
         raise ValueError(f"Unknown tool: {name}")
+
+    return server
+
+
+def run_mcp_server(read_only: bool = False) -> int:
+    _, Server, stdio_server, TextContent, Tool, Resource, ReadResourceContents = _require_mcp()
+
+    backend: Backend = get_backend_from_env()
+    server = _build_server(
+        backend=backend,
+        read_only=read_only,
+        Server=Server,
+        TextContent=TextContent,
+        Tool=Tool,
+        Resource=Resource,
+        ReadResourceContents=ReadResourceContents,
+    )
 
     async def _run() -> None:
         async with stdio_server() as (read_stream, write_stream):
