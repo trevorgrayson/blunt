@@ -28,6 +28,23 @@ class Backend(Protocol):
     def edit_ticket(self, ticket_id: str) -> Ticket:
         ...
 
+    def update_ticket(
+        self,
+        ticket_id: str,
+        subject: Optional[str] = None,
+        body: Optional[str] = None,
+        assignee: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        status: Optional[str] = None,
+        append_body: Optional[str] = None,
+        comment: Optional[str] = None,
+        log_message: Optional[str] = None,
+    ) -> Ticket:
+        ...
+
+    def tail_ticket_changelog(self, ticket_id: str, limit: int = 10) -> List[str]:
+        ...
+
 
 BackendFactory = Callable[[Optional[str]], Backend]
 
