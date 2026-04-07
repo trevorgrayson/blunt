@@ -4,6 +4,15 @@ tkts is a comprehensive ticket tracking system with pluggable backends.
 
 It can be backed by Jira, Trello, or other engines, and defaults to a stock on-disk engine. The interface is available over a Python API or an MCP.
 
+## Getting Started
+
+1. Install from this repo: `python -m pip install -e .`
+2. List tickets: `tkts` (or `tkts list`)
+3. Create a ticket: `tkts new "Replace printer toner"`
+4. Edit a ticket: `tkts edit <ticket-id>`
+
+By default, tickets are stored in `$HOME/.tkts`. You can override the root with `TKTS_ROOT` or a `.tkts/config` file in your working directory.
+
 ## CLI
 
 `tkts` is also available as a command-line program. It accepts verbs, which decide what action is taken. 
@@ -28,4 +37,3 @@ The first argument will be tested as a tkts "verb" and be used choose the action
 The default `tkts` engine is a file-based storage system. It defaults to a root of `$HOME/.tkts`, but can be configured by in-directory `.tkts/config` files or the `TKTS_ROOT` environment variable.
 
 Ticket files are stored in a format that is parsable as the Internet Message Format. It can define `Subject`, `Assignee`, and other fields as headers (like in RFC 5322). The body can be used to detail the ticket, including support of multiple documents.
-

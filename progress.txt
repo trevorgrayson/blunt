@@ -7,3 +7,6 @@
 - Tests: pytest (no tests collected, exit 5); type check: mypy not installed.
 - Added Python API helpers and `tkts mcp` server entrypoint; tests: pytest (no tests collected, exit 5), mypy (not installed).
 - Added backend registry with TKTS_BACKEND/backend config selection and wired CLI/API/MCP to use it; tests: pytest (no tests collected, exit 5), mypy (not installed).
+- Added Getting Started section to tkts/README.md with install and basic CLI usage; tests: pytest (no tests collected, exit 5), mypy (not installed).
+- Added multi-document support for tickets via MIME text/plain parts; tests: pytest (no tests collected, exit 5), mypy (not installed).
+- Added ticket model round-trip tests and fixed multi-document attachment handling; tests: pytest, mypy (not installed).
