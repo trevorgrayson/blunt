@@ -15,7 +15,9 @@ By default, tickets are stored in `$HOME/.tkts`. You can override the root with 
 
 ## CLI
 
-`tkts` is also available as a command-line program. It accepts verbs, which decide what action is taken. `todo` or `list` is the default verb, and it will return your present list of tickets even if no verb is provided.
+`tkts` is also available as a command-line program. It accepts verbs, which decide what action is taken. 
+
+
 
 If a phrase of words is provided that doesn't match a verb, it is interpreted as a todo item and added to the intake list.
 
