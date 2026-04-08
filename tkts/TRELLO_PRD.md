@@ -174,6 +174,8 @@ Backend needs a target board context:
 - `TRELLO_STATUS_TO_LIST` (mapping string/JSON; e.g. `todo:To Do,in-progress:Doing,...`)
 - `TRELLO_CREATE_MISSING_LABELS` (`true|false`)
 - `TRELLO_INCLUDE_DONE` (`true|false`) for `list_tickets` default behavior
+- `TRELLO_ASSIGNEE_FIELD` (`username|fullName|id`, default: `username`)
+- `TRELLO_EDIT_OPENS_BROWSER` (`true|false`, default: `false`)
 
 Notes:
 - If `.tkts/config` supports backend-specific keys, mirror these names there as well.
@@ -225,8 +227,9 @@ Notes:
 - Backend does not leak secrets in output/logs.
 
 ## Open Questions
-- How should `edit_ticket` behave for Trello (no-op vs open URL vs in-terminal editor)?
-- Should missing labels be auto-created by default, or require explicit opt-in?
-- Should “done” tickets be excluded from `list_tickets` by default for Trello backend?
-- How to map Trello members to `tkts.assignee` (username vs full name vs id)?
-- Should archived cards map to `done` or be hidden unless explicitly requested?
+### MVP Decisions
+- `edit_ticket` is a no-op by default; set `TRELLO_EDIT_OPENS_BROWSER=true` to open the card URL.
+- Missing labels fail fast by default; set `TRELLO_CREATE_MISSING_LABELS=true` to auto-create board labels.
+- `list_tickets()` excludes `done` by default; set `TRELLO_INCLUDE_DONE=true` to include them.
+- `assignee` maps to a single “primary” Trello member (first on card); represented as `username` by default and controlled by `TRELLO_ASSIGNEE_FIELD`.
+- Archived Trello cards (`closed=true`) are always excluded in the MVP (treated as non-tickets).

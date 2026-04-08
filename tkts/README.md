@@ -42,11 +42,68 @@ Example: `tkts exec` (or `tkts exec other-agent --flag`).
 
 ## Engines
 
+### Selecting a backend
+
+tkts chooses which backend (engine) to use in this order:
+
+1. `TKTS_BACKEND` environment variable.
+2. `.tkts/config` entry `backend=...` or `tkts_backend=...` (searched from your current directory upward).
+3. Defaults to `local` (file-based).
+
+For the file-based backend, you can also override the storage root:
+
+- `TKTS_ROOT` environment variable, or `.tkts/config` `root=...` / `tkts_root=...`.
+- Defaults to `~/.tkts`.
+
+Examples:
+
+- One-off override: `TKTS_BACKEND=trello tkts list`
+- Project config: create `.tkts/config` in your repo:
+
+  ```
+  backend=local
+  root=./.tkts-data
+  ```
+
 ### tkts engine
 
 The default `tkts` engine is a file-based storage system. It defaults to a root of `$HOME/.tkts`, but can be configured by in-directory `.tkts/config` files or the `TKTS_ROOT` environment variable.
 
 Ticket files are stored in a format that is parsable as the Internet Message Format. It can define `Subject`, `Assignee`, and other fields as headers (like in RFC 5322). The body can be used to detail the ticket, including support of multiple documents.
+
+### Trello backend
+
+Select Trello as the backend:
+
+- `TKTS_BACKEND=trello`
+
+Required environment variables:
+
+- `TRELLO_API_KEY`
+- `TRELLO_API_TOKEN`
+- `TRELLO_BOARD_ID` (board id or shortLink)
+
+Status mapping (MVP):
+
+- Ticket `status` maps to the Trello list name (case-insensitive).
+- By default, lists are expected to be named exactly: `todo`, `in-progress`, `in-review`, `blocked`, `done`.
+- Override list names with `TRELLO_STATUS_TO_LIST` (e.g. `todo:To Do,in-progress:Doing`).
+
+Behavior flags (MVP defaults):
+
+- `TRELLO_INCLUDE_DONE=false` excludes `done` cards from `tkts list`.
+- `TRELLO_CREATE_MISSING_LABELS=false` fails if a requested tag/label doesn’t exist on the board.
+- `TRELLO_ASSIGNEE_FIELD=username` controls whether `assignee` is Trello `username`, `fullName`, or `id`.
+- `TRELLO_EDIT_OPENS_BROWSER=false` keeps `tkts edit` as a no-op unless enabled.
+
+Examples:
+
+- List: `TKTS_BACKEND=trello tkts list`
+- Show: `TKTS_BACKEND=trello tkts show <shortLink-or-prefix>`
+- Create: `TKTS_BACKEND=trello tkts new "Subject" --body "..." --tags feature:trello,area:backend`
+- Move status: `TKTS_BACKEND=trello tkts update <id> --status in-progress`
+- Update labels: `TKTS_BACKEND=trello tkts update <id> --tags feature:trello,area:docs`
+- Mark done: `TKTS_BACKEND=trello tkts done <id>`
 
 ### Status
 

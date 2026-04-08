@@ -85,3 +85,8 @@ def _local_backend(root: Optional[str]) -> Backend:
 
 register_backend("local", _local_backend)
 register_backend("file", _local_backend)
+
+try:
+    import tkts.trello_backend  # noqa: F401
+except Exception:
+    pass

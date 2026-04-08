@@ -43,3 +43,39 @@ def test_cli_list_sorted_by_status(tmp_path: os.PathLike[str], capsys, monkeypat
         for line in lines
     ]
     assert ranks == sorted(ranks)
+
+
+def test_cli_list_renders_tags_after_status(tmp_path: os.PathLike[str], capsys, monkeypatch) -> None:
+    store = TicketStore(root=tmp_path)
+    ticket = store.create_ticket(
+        subject="Tagged ticket",
+        body="Body",
+        status="todo",
+        tags=["feature:trello", "area:docs"],
+    )
+
+    output = _run_cli(["list"], tmp_path, capsys, monkeypatch)
+    lines = [line for line in output.splitlines() if line.strip()]
+
+    assert len(lines) == 1
+    expected_prefix = f"{ticket.ticket_id[:5]} [todo] trello "
+    assert lines[0].startswith(expected_prefix)
+    assert lines[0].endswith("Tagged ticket")
+
+
+def test_cli_list_renders_implicit_feature_tag(tmp_path: os.PathLike[str], capsys, monkeypatch) -> None:
+    store = TicketStore(root=tmp_path)
+    ticket = store.create_ticket(
+        subject="Implicit feature",
+        body="Body",
+        status="todo",
+        tags=["area:docs", "trello"],
+    )
+
+    output = _run_cli(["list"], tmp_path, capsys, monkeypatch)
+    lines = [line for line in output.splitlines() if line.strip()]
+
+    assert len(lines) == 1
+    expected_prefix = f"{ticket.ticket_id[:5]} [todo] trello "
+    assert lines[0].startswith(expected_prefix)
+    assert lines[0].endswith("Implicit feature")

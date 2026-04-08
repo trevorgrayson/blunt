@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -10,6 +11,7 @@ import tempfile
 from typing import List, Optional, Sequence
 
 from tkts.backends import Backend, get_backend_from_env
+from tkts.trello_client import TrelloError
 
 
 _STATUS_ORDER = ["todo", "in-progress", "in-review", "blocked", "done"]
@@ -23,9 +25,63 @@ _EXEC_PROMPT = (
     "  5. Commit your changes."
 )
 
+_FEATURE_TAG_PATTERN = re.compile(r"^(?:feature:)?(?P<name>\w+)$")
+
+
+def _render_feature_tag(tags: Optional[Sequence[str]]) -> Optional[str]:
+    if not tags:
+        return None
+
+    explicit: list[str] = []
+    implicit: list[str] = []
+    for tag in tags:
+        if not tag:
+            continue
+        match = _FEATURE_TAG_PATTERN.fullmatch(tag.strip())
+        if not match:
+            continue
+        name = match.group("name")
+        if ":" in tag:
+            explicit.append(name)
+        else:
+            implicit.append(name)
+
+    if explicit:
+        return sorted(explicit)[0]
+    if implicit:
+        return sorted(implicit)[0]
+    return None
+
 
 def _parse_args() -> ArgumentParser:
-    parser = ArgumentParser("tkts")
+    try:
+        from tkts.backends import available_backends
+
+        backend_names = ", ".join(available_backends())
+    except Exception:
+        backend_names = "local, file, trello"
+
+    parser = ArgumentParser(
+        prog="tkts",
+        description="Ticket tracking with pluggable backends.",
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog=(
+            "Backend selection order:\n"
+            "  1. TKTS_BACKEND env var\n"
+            "  2. .tkts/config (searched from CWD upward): backend=... (or tkts_backend=...)\n"
+            "  3. default: local (file-based)\n"
+            "\n"
+            "Backend root (file-based engine):\n"
+            "  - TKTS_ROOT env var or .tkts/config root=... (or tkts_root=...)\n"
+            "  - default root: ~/.tkts\n"
+            "\n"
+            f"Available backends: {backend_names}\n"
+            "\n"
+            "Examples:\n"
+            "  TKTS_BACKEND=trello tkts list\n"
+            "  TKTS_ROOT=./.tkts-data tkts new \"Replace printer toner\"\n"
+        ),
+    )
     parser.add_argument(
         "verb",
         nargs="?",
@@ -122,7 +178,11 @@ def _render_list(backend: Backend) -> int:
     for ticket in tickets:
         status = ticket.status or "unknown"
         short_id = ticket.ticket_id[:5]
-        print(f"{short_id} [{status}] {ticket.subject}")
+        prefix = f"{short_id} [{status}]"
+        feature_tag = _render_feature_tag(ticket.tags)
+        if feature_tag:
+            prefix = f"{prefix} {feature_tag}"
+        print(f"{prefix} {ticket.subject}")
     return 0
 
 
@@ -303,7 +363,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         unknown = []
     if unknown:
         parser.error(f"unrecognized arguments: {' '.join(unknown)}")
-    backend = get_backend_from_env()
+    try:
+        backend = get_backend_from_env()
+    except (ValueError, TrelloError) as exc:
+        raise SystemExit(str(exc)) from None
 
     verb = args.verb or "list"
     if verb in {"list", "todo"}:

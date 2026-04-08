@@ -60,6 +60,21 @@ The backend is chosen in this order:
 
 You can also override the backend root via `TKTS_ROOT` or `.tkts/config` `root=...`/`tkts_root=...` for backends that use a filesystem root.
 
+Examples:
+
+- One-off override: `TKTS_BACKEND=trello tkts list`
+- Project config: create `.tkts/config`:
+
+  ```
+  backend=local
+  root=./.tkts-data
+  ```
+
+Backends currently shipped in this repo:
+
+- `local` / `file`: file-based tickets (root defaults to `~/.tkts`).
+- `trello`: Trello-backed tickets (requires `TRELLO_API_KEY`, `TRELLO_API_TOKEN`, `TRELLO_BOARD_ID`).
+
 ## Transferring Tickets Between Backends
 
 tkts does not ship a dedicated migration command yet, but you can use the Python API to move selected tickets:
