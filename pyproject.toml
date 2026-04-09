@@ -17,7 +17,6 @@ dependencies = [
   "pyserial",
   "pyyaml",
   "requests",
-  "rumps",
 ]
 
 [project.optional-dependencies]
@@ -33,6 +32,9 @@ meet = [
   "fastapi",
   "pydantic",
 ]
+mac = [
+  "rumps",
+]
 all = [
   "atlassian-python-api",
   "confluent-kafka",
@@ -41,10 +43,12 @@ all = [
   "networkx",
   "plotille",
   "pydantic",
+  "rumps",
   "slack_sdk",
 ]
 
 [project.scripts]
+tkts = "tkts.__main__:main"
 blunt = "widget:main"
 meet = "meet:main"
 tbd = "tbd.__main__:main"
