@@ -1,5 +1,6 @@
 from os import environ
-import requests
+import json
+from urllib import request, error
 
 GITHUB_USERNAME = environ.get("GITHUB_USER", "trevorgrayson-earnin")
 GITHUB_TOKEN = environ.get("GITHUB_TOKEN")
@@ -59,24 +60,32 @@ class GithubPRClient:
             return {}
         return {"Authorization": f"token {self.token}"}
 
+    def _request_json(self, url):
+        req = request.Request(url, headers=self._headers())
+        try:
+            with request.urlopen(req) as resp:
+                payload = resp.read().decode("utf-8")
+                return json.loads(payload)
+        except error.HTTPError as exc:
+            body = ""
+            try:
+                body = exc.read().decode("utf-8")
+            except Exception:
+                pass
+            raise RuntimeError(f"GitHub API error {exc.code} for {url}: {body}") from exc
+
     def fetch_open_prs(self, username=None):
         if username is None:
             username = self.username
         url = f"{API_URL}/search/issues?q=author:{username}+type:pr+state:open"
-        resp = requests.get(url, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()["items"]
+        return self._request_json(url)["items"]
 
     def get_pr_details(self, pr_url):
-        pr_resp = requests.get(pr_url, headers=self._headers())
-        pr_resp.raise_for_status()
-        pr = pr_resp.json()
+        pr = self._request_json(pr_url)
 
         reviews_url = pr_url + "/reviews"
 
-        reviews_resp = requests.get(reviews_url, headers=self._headers())
-        reviews_resp.raise_for_status()
-        reviews = reviews_resp.json()
+        reviews = self._request_json(reviews_url)
         self.reviews = reviews
 
         issue_comments = self._fetch_issue_comments(pr)
@@ -101,17 +110,13 @@ class GithubPRClient:
         comments_url = pr.get("comments_url")
         if not comments_url:
             return []
-        resp = requests.get(comments_url, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()
+        return self._request_json(comments_url)
 
     def _fetch_review_comments(self, pr):
         comments_url = pr.get("review_comments_url")
         if not comments_url:
             return []
-        resp = requests.get(comments_url, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()
+        return self._request_json(comments_url)
 
     def _latest_reviews_by_user(self, reviews):
         latest = {}
