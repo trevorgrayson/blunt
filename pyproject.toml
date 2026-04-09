@@ -7,11 +7,25 @@ name = "tkts"
 version = "0.1.0"
 description = "Ticket tracking system with pluggable backends."
 readme = "tkts/README.md"
+license = "LicenseRef-Proprietary"
+license-files = ["LICENSE"]
 requires-python = ">=3.8"
 dependencies = ["mcp>=0.1.0"]
+keywords = ["tickets", "issue-tracker", "mcp", "cli"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Operating System :: OS Independent",
+]
 
 [project.scripts]
 tkts = "tkts.__main__:main"
 
 [tool.setuptools]
-packages = ["tkts"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["tkts*"]
+
+[tool.setuptools.package-data]
+tkts = ["*.md"]

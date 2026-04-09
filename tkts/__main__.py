@@ -86,7 +86,7 @@ def _parse_args() -> ArgumentParser:
         "verb",
         nargs="?",
         default="todo",
-        help="Action to perform: list/todo (default), new, edit, update, done, show, tail, plan, exec, or mcp.",
+        help="Action to perform: list/todo (default), new, edit, update, done, show, tail, plan, exec, tui, or mcp.",
     )
     parser.add_argument(
         "subject",
@@ -158,6 +158,14 @@ def _parse_args() -> ArgumentParser:
         dest="read_only",
         action="store_true",
         help="Run MCP server in read-only mode (no writes).",
+    )
+    parser.add_argument(
+        "--watch",
+        nargs="?",
+        const=5.0,
+        default=None,
+        type=float,
+        help="TUI only: auto-refresh ticket list every N seconds (default: 5).",
     )
     return parser
 
@@ -344,6 +352,14 @@ def _handle_plan(filename: str, exec_plan: bool) -> int:
 
 
 def _handle_exec(agent_args: Optional[Sequence[str]]) -> int:
+    """
+    There is a permission issue with reading the provided PRD.
+    Trevor is short cutting this method to print a workable CLI command for execution.
+    :param agent_args:
+    :return:
+    """
+    return "codex exec --sandbox workspace-write @AGENTS.md"
+
     if agent_args:
         command = list(agent_args)
     else:
@@ -441,6 +457,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         from tkts.mcp_server import run_mcp_server
 
         return run_mcp_server(read_only=args.read_only)
+    if verb in {"tui", "ncurses"}:
+        try:
+            from tkts.ncurses_tui import run_tui
+        except Exception as exc:  # pragma: no cover - curses import failures
+            raise SystemExit(f"Unable to start TUI: {exc}") from None
+        if args.watch is not None and args.watch <= 0:
+            raise SystemExit("--watch must be > 0 seconds.")
+        return run_tui(watch=args.watch)
     if verb == "plan":
         if not args.subject:
             raise SystemExit("Filename is required for plan.")

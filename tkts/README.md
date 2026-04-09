@@ -6,7 +6,8 @@ It can be backed by Jira, Trello, or other engines, and defaults to a stock on-d
 
 ## Getting Started
 
-1. Install from this repo: `python -m pip install -e .`
+1. Install from PyPI: `python -m pip install tkts`
+   - Dev install from this repo: `python -m pip install -e .`
 2. List tickets: `tkts` (or `tkts list`)
 3. Create a ticket: `tkts new "Replace printer toner"`
 4. Edit a ticket: `tkts edit <ticket-id>`
@@ -35,9 +36,31 @@ Use `--status` to attach a status header (e.g., `tkts new "Fix CI flake" --statu
 `tail` prints recent change log entries for a ticket.
 `plan` will open a PRD file for refinement until actionable, with `--exec` to walk tasks.
 `exec` runs the agent command with the standard PRD prompt (defaults to `codex exec --sandbox workspace-write`).
+`tui` (or `ncurses`) launches the ncurses terminal UI.
 `mcp` launches an MCP server for Agents to interact with. the `--read-only` option will prevent writes.
 
 Example: `tkts exec` (or `tkts exec other-agent --flag`).
+
+### TUI (ncurses)
+
+Launch the terminal UI:
+
+- `tkts tui`
+- `tkts tui --watch` (auto-refresh every 5s)
+- `tkts tui --watch 2.5` (auto-refresh every 2.5s)
+
+Key highlights:
+
+- `j/k` or arrows move selection, `Enter` opens detail.
+- `c` creates a ticket, `e` edits the selected ticket.
+- `/` search, `f` filter, `s` sort, `t` group by primary tag.
+- `w` toggles watch mode (auto-refresh), `W` sets the watch interval.
+- `Space` toggles selection and `b` applies a bulk status.
+- `?` shows help.
+
+Environment toggles:
+
+- `TKTS_TUI_MONO=1` disables colors for monochrome terminals.
 
 
 ## Engines
