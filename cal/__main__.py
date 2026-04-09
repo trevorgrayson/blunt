@@ -7,6 +7,7 @@ parser = ArgumentParser("display ics calendar")
 parser.add_argument("url", help="calendar url")
 args = parser.parse_args()
 
+
 def main():
     asset = urlparse(args.url)
     conn = HTTPSConnection(asset.hostname)
@@ -23,7 +24,8 @@ def main():
     #     print(event)
 
     for e in c.timeline:
-        print(e.name, e.begin.humanize(), e.begin.date(), "->", e.end.date().day)
+        print(e.name, e.begin, e.begin.date(), "->", e.end.date().day)
+
 
 if __name__ == "__main__":
     main()

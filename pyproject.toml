@@ -1,31 +1,81 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tkts"
-version = "0.1.0"
-description = "Ticket tracking system with pluggable backends."
-readme = "tkts/README.md"
-license = "LicenseRef-Proprietary"
-license-files = ["LICENSE"]
+name = "blunt"
+version = "0.0.1"
+description = "Automating the Blunt end of the office."
+readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["mcp>=0.1.0"]
-keywords = ["tickets", "issue-tracker", "mcp", "cli"]
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3 :: Only",
-  "Operating System :: OS Independent",
+authors = [{ name = "trevor", email = "trevor@trevorgrayson.com" }]
+urls = { Homepage = "https://trevorgrayson.com" }
+
+dependencies = [
+  "ics",
+  "openai",
+  "pyserial",
+  "pyyaml",
+  "requests",
+  "rumps",
+]
+
+[project.optional-dependencies]
+clients = [
+  "atlassian-python-api",
+  "confluent-kafka",
+  "matplotlib",
+  "networkx",
+  "plotille",
+  "slack_sdk",
+]
+meet = [
+  "fastapi",
+  "pydantic",
+]
+all = [
+  "atlassian-python-api",
+  "confluent-kafka",
+  "fastapi",
+  "matplotlib",
+  "networkx",
+  "plotille",
+  "pydantic",
+  "slack_sdk",
 ]
 
 [project.scripts]
-tkts = "tkts.__main__:main"
+blunt = "widget:main"
+meet = "meet:main"
+tbd = "tbd.__main__:main"
+dossier = "dossier:main"
+"cal.blunt" = "cal.__main__:main"
 
 [tool.setuptools]
-include-package-data = true
+package-dir = { "" = "." }
 
 [tool.setuptools.packages.find]
-include = ["tkts*"]
-
-[tool.setuptools.package-data]
-tkts = ["*.md"]
+where = ["."]
+include = [
+  "cal",
+  "cal.*",
+  "clients",
+  "clients.*",
+  "dossier",
+  "dossier.*",
+  "instrumentation",
+  "instrumentation.*",
+  "meet",
+  "meet.*",
+  "slides",
+  "slides.*",
+  "status",
+  "status.*",
+  "tbd",
+  "tbd.*",
+  "tkts",
+  "tkts.*",
+  "widget",
+  "widget.*",
+]
+namespaces = true
