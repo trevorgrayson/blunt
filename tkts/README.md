@@ -1,6 +1,7 @@
 # tkts
 
-tkts is a comprehensive ticket tracking system with pluggable backends.
+CLI & MCP-friendly ticket tracking system to orchestrate both humans and agents. Pluggable backends
+for your favorite ticketing system, or use the uncompromising local cache.
 
 It can be backed by Jira, Trello, or other engines, and defaults to a stock on-disk engine. The interface is available over a Python API or an MCP.
 
@@ -14,10 +15,15 @@ It can be backed by Jira, Trello, or other engines, and defaults to a stock on-d
 
 By default, tickets are stored in `$HOME/.tkts`. You can override the root with `TKTS_ROOT` or a `.tkts/config` file in your working directory.
 
+## AGENTS.md
+
+!!!BEWARE!!! If AGENTS.md is in your project's root, or you include it -- your project will complete itself.  This iterative Agent direction, instructs updates into the tkts mcp, and agents iterate until the work is done.
+
 ## CLI
 
 `tkts` is also available as a command-line program. It accepts verbs, which decide what action is taken. 
 
+You will be a more effective engineer with a work tracking system.  Agents will get a lot of work done more quickly, with work which is broken down into tkts.  You may modify, or `tkts --watch` work get done in real time.
 
 
 If a phrase of words is provided that doesn't match a verb, it is interpreted as a todo item and added to the intake list.
@@ -122,13 +128,14 @@ Behavior flags (MVP defaults):
 
 Examples:
 
-- List: `TKTS_BACKEND=trello tkts list`
+- List: `tkts list`
+- Show: `tkts show <shortLink-or-prefix>`
+- Create: `tkts new "Subject" --body "..." --tags feature:trello,area:backend`
+- Move status: `tkts update <id> --status in-progress`
+- Update labels: `tkts update <id> --tags feature:trello,area:docs`
+- Mark done: `tkts done <id>`
+- Define backend: `export TKTS_BACKEND=trello`
 - List by Trello list name: `TKTS_BACKEND=trello TKTS_TRELLO_LIST="Backlog" tkts list`
-- Show: `TKTS_BACKEND=trello tkts show <shortLink-or-prefix>`
-- Create: `TKTS_BACKEND=trello tkts new "Subject" --body "..." --tags feature:trello,area:backend`
-- Move status: `TKTS_BACKEND=trello tkts update <id> --status in-progress`
-- Update labels: `TKTS_BACKEND=trello tkts update <id> --tags feature:trello,area:docs`
-- Mark done: `TKTS_BACKEND=trello tkts done <id>`
 
 ### Status
 
