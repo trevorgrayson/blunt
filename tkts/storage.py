@@ -172,7 +172,8 @@ class TicketStore:
             return []
         return sorted(path.stem for path in directory.glob("*.tkt"))
 
-    def list_tickets(self) -> List[Ticket]:
+    def list_tickets(self, *, list_name: Optional[str] = None) -> List[Ticket]:
+        _ = list_name
         tickets = []
         for ticket_id in self.list_ids():
             ticket = self.get_ticket(ticket_id)

@@ -118,10 +118,12 @@ Behavior flags (MVP defaults):
 - `TRELLO_CREATE_MISSING_LABELS=false` fails if a requested tag/label doesn’t exist on the board.
 - `TRELLO_ASSIGNEE_FIELD=username` controls whether `assignee` is Trello `username`, `fullName`, or `id`.
 - `TRELLO_EDIT_OPENS_BROWSER=false` keeps `tkts edit` as a no-op unless enabled.
+- `TKTS_TRELLO_LIST` filters `tkts list` to a single Trello list by name.
 
 Examples:
 
 - List: `TKTS_BACKEND=trello tkts list`
+- List by Trello list name: `TKTS_BACKEND=trello TKTS_TRELLO_LIST="Backlog" tkts list`
 - Show: `TKTS_BACKEND=trello tkts show <shortLink-or-prefix>`
 - Create: `TKTS_BACKEND=trello tkts new "Subject" --body "..." --tags feature:trello,area:backend`
 - Move status: `TKTS_BACKEND=trello tkts update <id> --status in-progress`

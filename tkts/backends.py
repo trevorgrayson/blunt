@@ -9,7 +9,7 @@ from tkts.storage import TicketStore, load_config
 
 
 class Backend(Protocol):
-    def list_tickets(self) -> List[Ticket]:
+    def list_tickets(self, *, list_name: Optional[str] = None) -> List[Ticket]:
         ...
 
     def get_ticket(self, ticket_id: str) -> Optional[Ticket]:
@@ -87,6 +87,6 @@ register_backend("local", _local_backend)
 register_backend("file", _local_backend)
 
 try:
-    import tkts.trello_backend  # noqa: F401
+    import tkts.trello.backend  # noqa: F401
 except Exception:
     pass

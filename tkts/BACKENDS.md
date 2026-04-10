@@ -12,8 +12,9 @@ A backend is registered with `register_backend(name, factory)` where `factory` h
 
 Backends must implement the following methods:
 
-- `list_tickets() -> List[Ticket]`
+- `list_tickets(list_name: Optional[str] = None) -> List[Ticket]`
   - Return all tickets for the backend.
+  - Trello backends may use `list_name` as a board list name filter.
 
 - `get_ticket(ticket_id: str) -> Optional[Ticket]`
   - Return a ticket by id.

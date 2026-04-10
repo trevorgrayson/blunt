@@ -12,9 +12,9 @@ def get_store(root: Optional[str] = None, backend: Optional[str] = None) -> Back
     return get_backend_from_env()
 
 
-def list_tickets(store: Optional[Backend] = None) -> List[Ticket]:
+def list_tickets(store: Optional[Backend] = None, *, list_name: Optional[str] = None) -> List[Ticket]:
     store = store or get_store()
-    return store.list_tickets()
+    return store.list_tickets(list_name=list_name)
 
 
 def get_ticket(ticket_id: str, store: Optional[Backend] = None) -> Optional[Ticket]:

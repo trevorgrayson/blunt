@@ -11,7 +11,7 @@ import tempfile
 from typing import List, Optional, Sequence
 
 from tkts.backends import Backend, get_backend_from_env
-from tkts.trello_client import TrelloError
+from tkts.trello import TrelloError
 
 
 _STATUS_ORDER = ["todo", "in-progress", "in-review", "blocked", "done"]
@@ -80,13 +80,14 @@ def _parse_args() -> ArgumentParser:
             "Examples:\n"
             "  TKTS_BACKEND=trello tkts list\n"
             "  TKTS_ROOT=./.tkts-data tkts new \"Replace printer toner\"\n"
+            "  tkts trello --include-closed\n"
         ),
     )
     parser.add_argument(
         "verb",
         nargs="?",
         default="todo",
-        help="Action to perform: list/todo (default), new, edit, update, done, show, tail, plan, exec, tui, or mcp.",
+        help="Action to perform: list/todo (default), new, edit, update, done, show, tail, plan, exec, tui, trello, or mcp.",
     )
     parser.add_argument(
         "subject",
@@ -167,11 +168,20 @@ def _parse_args() -> ArgumentParser:
         type=float,
         help="TUI only: auto-refresh ticket list every N seconds (default: 5).",
     )
+    parser.add_argument(
+        "--list-name",
+        default=None,
+        help="Trello only: list name to filter tkts list output.",
+    )
     return parser
 
 
-def _render_list(backend: Backend) -> int:
-    tickets = backend.list_tickets()
+def _render_list(backend: Backend, *, list_name: Optional[str]) -> int:
+    if not list_name:
+        list_name = os.environ.get("TKTS_TRELLO_LIST") or None
+        if list_name is not None:
+            list_name = list_name.strip() or None
+    tickets = backend.list_tickets(list_name=list_name)
     if not tickets:
         print("No tickets found.")
         return 0
@@ -369,6 +379,12 @@ def _handle_exec(agent_args: Optional[Sequence[str]]) -> int:
     return result.returncode
 
 
+def _handle_trello(trello_args: Optional[Sequence[str]]) -> int:
+    from tkts.trello.__main__ import main as trello_main
+
+    return trello_main(list(trello_args) if trello_args else None)
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = _parse_args()
     raw_args = list(argv) if argv is not None else sys.argv[1:]
@@ -377,8 +393,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args.subject = list(args.subject or [])
         args.subject.extend(unknown)
         unknown = []
+    trello_args: list[str] = []
+    if args.verb == "trello":
+        trello_args = list(unknown)
+        unknown = []
     if unknown:
         parser.error(f"unrecognized arguments: {' '.join(unknown)}")
+    if args.verb == "trello":
+        return _handle_trello(trello_args)
     try:
         backend = get_backend_from_env()
     except (ValueError, TrelloError) as exc:
@@ -386,7 +408,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     verb = args.verb or "list"
     if verb in {"list", "todo"}:
-        return _render_list(backend)
+        return _render_list(backend, list_name=args.list_name)
     if verb == "new":
         body = _capture_description(args.body) if args.desc else args.body
         return _handle_new(
