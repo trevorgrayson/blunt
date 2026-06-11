@@ -11,3 +11,7 @@ __pycache__/
 docs/*
 venv
 .venv
+
+# Google OAuth secrets — never commit (contain client secret / refresh token)
+credentials.json
+token.json
