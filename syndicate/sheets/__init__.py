@@ -328,26 +328,45 @@ def collect_sources(path: str | Path) -> tuple[str, list[Path]]:
 # Drive lookup + Sheets writes
 # --------------------------------------------------------------------------- #
 
-def find_spreadsheet(creds: Credentials, title: str) -> str | None:
-    """Return the id of an app-created spreadsheet with this exact title, if any."""
+def find_spreadsheet(creds: Credentials, title: str, folder_id: str | None = None) -> str | None:
+    """Return the id of an app-created spreadsheet with this exact title, if any.
+
+    When ``folder_id`` is given the match is scoped to that Drive folder, so the
+    same title can live independently under different folders.
+    """
     # drive.file scope only surfaces files this client created -> safe match.
     q = (
         f"name = '{title.replace(chr(39), chr(92) + chr(39))}' and "
         f"mimeType = '{SPREADSHEET_MIME}' and trashed = false"
     )
+    if folder_id:
+        q += f" and '{folder_id}' in parents"
     params = urlencode({"q": q, "fields": "files(id,name)", "spaces": "drive"})
     result = _request(creds, "GET", f"{DRIVE_FILES}?{params}")
     files = result.get("files", [])
     return files[0]["id"] if files else None
 
 
-def create_spreadsheet(creds: Credentials, title: str, tab_titles: list[str]) -> str:
+def _move_to_folder(creds: Credentials, file_id: str, folder_id: str) -> None:
+    """Reparent a file into ``folder_id`` (Sheets are created in My Drive root)."""
+    params = urlencode(
+        {"addParents": folder_id, "removeParents": "root", "fields": "id,parents"}
+    )
+    _request(creds, "PATCH", f"{DRIVE_FILES}/{file_id}?{params}", payload={})
+
+
+def create_spreadsheet(
+    creds: Credentials, title: str, tab_titles: list[str], folder_id: str | None = None
+) -> str:
     body = {
         "properties": {"title": title},
         "sheets": [{"properties": {"title": t}} for t in tab_titles],
     }
     result = _request(creds, "POST", SHEETS_API, payload=body)
-    return result["spreadsheetId"]
+    spreadsheet_id = result["spreadsheetId"]
+    if folder_id:
+        _move_to_folder(creds, spreadsheet_id, folder_id)
+    return spreadsheet_id
 
 
 def _existing_tabs(creds: Credentials, spreadsheet_id: str) -> dict[str, int]:
@@ -423,15 +442,20 @@ def publish(
     creds: Credentials,
     path: str | Path,
     *,
+    folder_id: str | None = None,
     stream=print,
 ) -> str:
-    """Publish a file or directory to a single spreadsheet. Returns its URL."""
+    """Publish a file or directory to a single spreadsheet. Returns its URL.
+
+    ``folder_id`` is an optional Drive folder id; when set the spreadsheet is
+    created in (and looked up within) that folder rather than My Drive root.
+    """
     title, files = collect_sources(path)
     tab_titles = [_tab_title(f) for f in files]
 
-    spreadsheet_id = find_spreadsheet(creds, title)
+    spreadsheet_id = find_spreadsheet(creds, title, folder_id)
     if spreadsheet_id is None:
-        spreadsheet_id = create_spreadsheet(creds, title, tab_titles)
+        spreadsheet_id = create_spreadsheet(creds, title, tab_titles, folder_id)
         stream(f"created spreadsheet '{title}' ({spreadsheet_id})")
     else:
         reconcile_tabs(creds, spreadsheet_id, tab_titles)

@@ -2,7 +2,7 @@
 """
 Publish CSV/TSV files to Google Sheets, idempotently.
 
-    python -m syndicate.sheets PATH [--credentials credentials.json]
+    python -m syndicate.sheets PATH [--credentials credentials.json] [--folder DRIVE_FOLDER_ID]
 
 PATH is a single .csv/.tsv file (-> one spreadsheet, one tab) or a directory
 of them (-> one spreadsheet, one tab per file). Re-running mirrors the source.
@@ -34,11 +34,17 @@ def main(argv: Iterable[str] | None = None) -> int:
         default=os.getenv("GOOGLE_TOKEN"),
         help="Where to cache the OAuth token (defaults to token.json next to --credentials).",
     )
+    parser.add_argument(
+        "--folder",
+        default=os.getenv("GOOGLE_DRIVE_FOLDER"),
+        help="Drive folder id to create/sync the spreadsheet in "
+        "(defaults to $GOOGLE_DRIVE_FOLDER, else My Drive root).",
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     try:
         creds = load_credentials(args.credentials, args.token)
-        url = publish(creds, args.path)
+        url = publish(creds, args.path, folder_id=args.folder)
     except (RuntimeError, FileNotFoundError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
