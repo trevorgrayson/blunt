@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "blunt"
 version = "0.0.1"
-description = "Automating the Blunt end of the office."
+description = "Management and operational productivity for developers who wish to do neither."
 authors = [{ name = "trevor grayson", email = "trevor@trevorgrayson.com" }]
 readme = "README.md"
 license-files = ["LICENSE"]
@@ -16,12 +16,24 @@ dependencies = [
   "requests",
   "rumps; sys_platform == 'darwin'",
 ]
-keywords = ["cli", "productivity", "google-sheets"]
+keywords = ["cli", "productivity", "google-sheets", "syndicate", "publish", "csv", "tsv", "calendar"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Topic :: Utilities",
+  "Topic :: Office/Business",
   "Operating System :: OS Independent",
 ]
+
+[project.urls]
+Homepage = "https://github.com/trevorgrayson/blunt"
+Repository = "https://github.com/trevorgrayson/blunt"
+"Bug Tracker" = "https://github.com/trevorgrayson/blunt/issues"
 
 [project.scripts]
 blunt = "widget:main"

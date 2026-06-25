@@ -12,6 +12,9 @@ docs/*
 venv
 .venv
 
+# workspace scratch directory — contains build artifacts and full repo copies
+_/
+
 # Google OAuth secrets — never commit (contain client secret / refresh token)
 credentials.json
 token.json
