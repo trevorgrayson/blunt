@@ -443,14 +443,22 @@ def publish(
     path: str | Path,
     *,
     folder_id: str | None = None,
+    name: str | None = None,
+    name_prefix: str | None = None,
     stream=print,
 ) -> str:
     """Publish a file or directory to a single spreadsheet. Returns its URL.
 
     ``folder_id`` is an optional Drive folder id; when set the spreadsheet is
     created in (and looked up within) that folder rather than My Drive root.
+    ``name`` overrides the spreadsheet title entirely.
+    ``name_prefix`` prepends a prefix to the derived title.
     """
     title, files = collect_sources(path)
+    if name is not None:
+        title = name
+    elif name_prefix is not None:
+        title = name_prefix + title
     tab_titles = [_tab_title(f) for f in files]
 
     spreadsheet_id = find_spreadsheet(creds, title, folder_id)

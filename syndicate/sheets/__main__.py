@@ -40,11 +40,22 @@ def main(argv: Iterable[str] | None = None) -> int:
         help="Drive folder id to create/sync the spreadsheet in "
         "(defaults to $GOOGLE_DRIVE_FOLDER, else My Drive root).",
     )
+    parser.add_argument(
+        "--name",
+        default=None,
+        help="Override the spreadsheet title (instead of deriving it from the path).",
+    )
+    parser.add_argument(
+        "--name-prefix",
+        default=None,
+        dest="name_prefix",
+        help="Prepend a prefix to the derived spreadsheet title.",
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     try:
         creds = load_credentials(args.credentials, args.token)
-        url = publish(creds, args.path, folder_id=args.folder)
+        url = publish(creds, args.path, folder_id=args.folder, name=args.name, name_prefix=args.name_prefix)
     except (RuntimeError, FileNotFoundError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1

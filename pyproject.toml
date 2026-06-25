@@ -1,33 +1,35 @@
 [build-system]
-requires = ["uv_build >= 0.10.10, <0.12.0"]
-build-backend = "uv_build"
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "tkts"
-version = "0.1.1"
-description = "MCP-friendly ticket tracking system with pluggable backends."
+name = "blunt"
+version = "0.0.1"
+description = "Automating the Blunt end of the office."
 authors = [{ name = "trevor grayson", email = "trevor@trevorgrayson.com" }]
-# urls = { Homepage = "https://trevorgrayson.com" }
-readme = "tkts/README.md"
-#license = { file = "LICENSE" }
-#license-files = ["LICENSE"]
+readme = "README.md"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
-dependencies = []
-keywords = ["tickets", "issue-tracker", "mcp", "cli"]
+dependencies = [
+  "ics",
+  "PyYAML",
+  "requests",
+  "rumps; sys_platform == 'darwin'",
+]
+keywords = ["cli", "productivity", "google-sheets"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
   "Operating System :: OS Independent",
 ]
 
-[project.optional-dependencies]
-mcp = [
-  "mcp>=0.1.0"
-]
-
 [project.scripts]
-tkts = "tkts.__main__:main"
+blunt = "widget:main"
+meet = "meet:main"
+# tbd = "tbd.__main__:main"
+dossier = "dossier:main"
+"blunt.cal" = "cal.__main__:main"
+syndicate = "syndicate.__main__:main"
 
-[tool.uv.build-backend]
-module-name = "tkts"
-module-root = ""
+[tool.setuptools.packages.find]
+exclude = ["tkts*", "tests*", "venv*", ".venv*", "build*", "dist*"]
